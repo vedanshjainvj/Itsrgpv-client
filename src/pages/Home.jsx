@@ -5,7 +5,7 @@ import AchievementsCarousel from '../components/sections/AchievementsCarousel';
 import StartupsSection from '../components/sections/StartupsSection';
 import PartnersMarquee from '../components/sections/PartnersMarquee';
 import FestsSection from '../components/sections/FestsSection';
-import ResourcesCTA from '../components/sections/ResourcesCta';
+import ResourcesCTA from '../components/sections/ResourcesCTA';
 import DepartmentsSection from '../components/sections/DepartmentsSection';
 import GlimpsesGrid from '../components/sections/GlimpsesGrid';
 import NssNccSection from '../components/sections/NssNccSection';
