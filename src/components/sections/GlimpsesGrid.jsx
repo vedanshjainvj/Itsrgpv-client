@@ -9,7 +9,7 @@ const GlimpsesGrid = () => {
       type: 'department',
       title: 'Computer Science',
       subtitle: 'B.Tech Program',
-      image: DEPARTMENTS[0].image,
+      image: 'https://itdcindia.com/wp-content/uploads/2024/05/WhatsApp-Image-2024-05-31-at-4.28.36-PM.jpeg',
       color: 'blue',
       link: '/academics/cse'
     },
