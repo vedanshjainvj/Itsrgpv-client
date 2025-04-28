@@ -416,16 +416,16 @@ export const NAV_LINKS = [
       description: 'Access question papers from previous years for all departments and courses.',
       count: '2000+',
       icon: 'DocumentIcon',
-      image: 'https://source.unsplash.com/random/600x400/?exam,paper',
+      image: 'https://preview.redd.it/class-10-science-pyqs-ke-link-dedo-koi-v0-si4tyb9hxcla1.jpg?auto=webp&s=c199dc08e303edfd79d425307c81dbd899ebd875',
       categories: ['Semester Exams', 'Mid-Term Tests', 'Quizzes']
     },
     gallery: {
       title: 'Photo Gallery',
-      description: 'Browse through moments captured during various college events and activities.',
+      description: 'Browse through moments captured during college events and activities.',
       count: '5000+',
       icon: 'CameraIcon',
-      image: 'https://source.unsplash.com/random/600x400/?gallery,photos',
-      categories: ['Events', 'Campus Life', 'Sports', 'Cultural Activities']
+      image: 'https://itdcindia.com/wp-content/uploads/2024/05/WhatsApp-Image-2024-05-31-at-4.28.36-PM.jpeg',
+      categories: ['Events', 'Campus Life', 'Sports']
     },
     videos: {
       title: 'Video Library',
