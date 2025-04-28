@@ -95,7 +95,7 @@ const ProfileDropdown = ({ user, isMobile = false }) => {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            className={`absolute ${isMobile ? 'right-0 mt-2 w-48' : 'right-0 mt-2 w-56'} bg-gray-900/90 backdrop-blur-xl border border-gray-800/80 rounded-xl shadow-xl overflow-hidden z-50`}
+            className={`absolute ${isMobile ? 'right-0 mt-2 w-48' : 'right-0 mt-2 w-56'} bg-black backdrop-blur-xl border border-gray-800/80 rounded-xl shadow-xl overflow-hidden z-50`}
             variants={dropdownVariants}
             initial="hidden"
             animate="visible"
@@ -112,7 +112,7 @@ const ProfileDropdown = ({ user, isMobile = false }) => {
                 </div>
                 <div>
                   <div className="text-white font-medium">
-                    {user?.firstName} {user?.lastName}
+                    {user?.firstName || 'Hello User'} {user?.lastName}
                   </div>
                   <div className="text-gray-400 text-xs truncate max-w-[140px]">{user?.email || 'user@example.com'}</div>
                 </div>
