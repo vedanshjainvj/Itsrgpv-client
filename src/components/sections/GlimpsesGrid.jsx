@@ -1,213 +1,137 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { DEPARTMENTS, CLUBS, ACHIEVEMENTS, FESTS, PARTNERS } from '../../utils/constants';
+import { images } from '../../utils/constants';
 
 const GlimpsesGrid = () => {
-  const gridSections = [
-    {
-      type: 'department',
-      title: 'Computer Science',
-      subtitle: 'B.Tech Program',
-      image: 'https://itdcindia.com/wp-content/uploads/2024/05/WhatsApp-Image-2024-05-31-at-4.28.36-PM.jpeg',
-      color: 'blue',
-      link: '/academics/cse'
-    },
-    {
-      type: 'club',
-      title: CLUBS[0].name,
-      subtitle: CLUBS[0].tagline,
-      image: CLUBS[0].coverImage,
-      color: 'pink',
-      link: '/clubs/ieee'
-    },
-    {
-      type: 'achievement',
-      title: ACHIEVEMENTS[0].achievement,
-      subtitle: ACHIEVEMENTS[0].student,
-      image: ACHIEVEMENTS[0].image,
-      color: 'purple',
-      link: '/achievements'
-    },
-    {
-      type: 'fest',
-      title: FESTS[0].name,
-      subtitle: FESTS[0].date,
-      image: FESTS[0].image,
-      color: 'green',
-      link: '/fests/technova'
-    },
-    {
-      type: 'stat',
-      title: '45+',
-      subtitle: 'Years of Excellence',
-      color: 'yellow',
-      link: '/about'
-    },
-    {
-      type: 'department',
-      title: 'Electronics',
-      subtitle: 'Research Labs',
-      image: DEPARTMENTS[1].image,
-      color: 'indigo',
-      link: '/academics/ece'
-    },
-    {
-      type: 'club',
-      title: CLUBS[2].name,
-      subtitle: CLUBS[2].tagline,
-      image: CLUBS[2].coverImage,
-      color: 'red',
-      link: '/clubs/robotics'
-    },
-    {
-      type: 'achievement',
-      title: ACHIEVEMENTS[2].achievement,
-      subtitle: ACHIEVEMENTS[2].student,
-      image: ACHIEVEMENTS[2].image,
-      color: 'teal',
-      link: '/achievements'
-    },
-    {
-      type: 'partners',
-      title: 'Our Partners',
-      subtitle: PARTNERS.length + '+ Industry Connections',
-      color: 'amber',
-      link: '/partners'
-    },
-    {
-      type: 'fest',
-      title: FESTS[1].name,
-      subtitle: FESTS[1].date,
-      image: FESTS[1].image,
-      color: 'pink',
-      link: '/fests/rhythms'
-    }
-  ];
+  const [hoveredItem, setHoveredItem] = useState(null);
 
   const container = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1
+        staggerChildren: 0.03
       }
     }
   };
 
   const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+    hidden: { opacity: 0, y: 10 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.3 } }
   };
 
   return (
-    <section className="py-24 bg-black relative overflow-hidden">
+    <section className="py-12 bg-black relative overflow-hidden">
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-b from-black to-gray-900"></div>
+        <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-purple-500/5 rounded-full blur-[120px] opacity-30"></div>
+        <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-blue-500/5 rounded-full blur-[120px] opacity-30"></div>
       </div>
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Glimpses of UTI</h2>
-          <div className="h-1 w-20 bg-gradient-to-r from-pink-500 to-purple-500 mx-auto"></div>
-          <p className="mt-6 text-gray-300 max-w-2xl mx-auto">
-            Explore the diverse facets of our college life, from academic excellence to vibrant campus culture.
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          viewport={{ once: true }}
+          className="text-center mb-8"
+        >
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4 }}
+            viewport={{ once: true }}
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-pink-500/20 to-purple-500/20 backdrop-blur-sm px-4 py-1.5 rounded-full mb-3 border border-white/10"
+          >
+            <div className="h-2 w-2 rounded-full bg-pink-500 animate-pulse"></div>
+            <span className="text-sm font-medium text-white">Visual Tour</span>
+          </motion.div>
+          
+          <h2 className="text-3xl font-bold text-white mb-2">Glimpses of RGPV</h2>
+          <p className="text-gray-300 max-w-2xl mx-auto text-sm md:text-base">
+            Explore the diverse facets of our university through this visual journey
           </p>
-        </div>
+        </motion.div>
         
         <motion.div 
-          className="grid grid-cols-2 md:grid-cols-4 gap-4"
+          className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2 md:gap-3"
           variants={container}
           initial="hidden"
           whileInView="show"
-          viewport={{ once: true, margin: "-100px" }}
+          viewport={{ once: true, margin: "-50px" }}
         >
-          {gridSections.map((section, index) => {
-            // Determine grid span classes
-            const isWide = index === 0 || index === 3 || index === 6;
-            const isTall = index === 0 || index === 4 || index === 8;
-            const spanClasses = `${isWide ? 'col-span-2' : 'col-span-1'} ${isTall ? 'row-span-2' : 'row-span-1'}`;
-            
-            return (
-              <motion.div
-                key={index}
-                className={`${spanClasses} relative rounded-2xl overflow-hidden group`}
-                variants={item}
-              >
-                <Link to={section.link} className="absolute inset-0 w-full h-full">
-                  {/* Background image or gradient */}
-                  {section.image ? (
-                    <>
-                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent z-10"></div>
-                      <img 
-                        src={section.image} 
-                        alt={section.title} 
-                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                      />
-                    </>
-                  ) : (
-                    <div className={`absolute inset-0 bg-gradient-to-br from-${section.color}-500/80 to-${section.color}-700/80`}></div>
-                  )}
-                  
-                  {/* Content */}
-                  <div className="absolute inset-0 flex flex-col justify-end p-4 md:p-6 z-20">
-                    {section.type === 'stat' ? (
-                      <div className="flex items-center justify-center h-full">
-                        <div className="text-center">
-                          <h3 className="text-4xl md:text-6xl font-bold text-white mb-2">{section.title}</h3>
-                          <p className="text-white/90">{section.subtitle}</p>
-                        </div>
-                      </div>
-                    ) : section.type === 'partners' ? (
-                      <div className="flex items-center justify-center h-full">
-                        <div className="text-center">
-                          <div className="flex flex-wrap justify-center gap-2 mb-3">
-                            {PARTNERS.slice(0, 4).map((partner, i) => (
-                              <div key={i} className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
-                                <span className="text-xs text-white">{partner.name.charAt(0)}</span>
-                              </div>
-                            ))}
-                          </div>
-                          <h3 className="text-xl font-bold text-white mb-1">{section.title}</h3>
-                          <p className="text-white/90 text-sm">{section.subtitle}</p>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <div className={`bg-gradient-to-r from-${section.color}-500/20 to-${section.color}-700/20 backdrop-blur-sm text-white px-2 py-0.5 rounded-full text-xs inline-block mb-2 border border-white/10 w-fit`}>
-                          {section.type.charAt(0).toUpperCase() + section.type.slice(1)}
-                        </div>
-                        <h3 className="text-lg md:text-xl font-bold text-white mb-1">{section.title}</h3>
-                        <p className="text-white/80 text-xs md:text-sm">{section.subtitle}</p>
-                      </>
-                    )}
+          {images.map((image, index) => (
+            <motion.div
+              key={image.id}
+              className={`relative rounded-lg overflow-hidden ${
+                index === 0 || index === 5 || index === 10 
+                  ? "col-span-2 row-span-2 h-[200px] md:h-[240px]" 
+                  : "col-span-1 row-span-1 h-[100px] md:h-[120px]"
+              } group`}
+              variants={item}
+              onHoverStart={() => setHoveredItem(image.id)}
+              onHoverEnd={() => setHoveredItem(null)}
+              whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+            >
+              <Link to={image.link} className="absolute inset-0 w-full h-full">
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent z-10"></div>
+                <img 
+                  src={image.src} 
+                  alt={image.title} 
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = "https://via.placeholder.com/400x300/111827/6d28d9?text=RGPV";
+                  }}
+                />
+                
+                <motion.div 
+                  className="absolute inset-x-0 bottom-0 p-2 z-20"
+                  animate={{ 
+                    y: hoveredItem === image.id ? -3 : 0,
+                    transition: { duration: 0.2 }
+                  }}
+                >
+                  <div className="bg-white/10 backdrop-blur-sm text-white px-1.5 py-0.5 rounded-full text-[9px] inline-block mb-1 border border-white/10 w-fit">
+                    {image.category}
                   </div>
-                  
-                  {/* Hover overlay */}
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex items-center justify-center">
-                    <div className="bg-white/20 backdrop-blur-sm rounded-full w-10 h-10 flex items-center justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                      </svg>
-                    </div>
+                  <h3 className="text-xs font-bold text-white leading-tight">{image.title}</h3>
+                </motion.div>
+                
+                <motion.div 
+                  className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 flex items-center justify-center"
+                  initial={{ opacity: 0 }}
+                  whileHover={{ opacity: 1 }}
+                >
+                  <div className="bg-white/20 backdrop-blur-sm rounded-full w-7 h-7 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
                   </div>
-                </Link>
-              </motion.div>
-            );
-          })}
+                </motion.div>
+              </Link>
+            </motion.div>
+          ))}
         </motion.div>
         
-        <div className="mt-12 text-center">
+        <motion.div 
+          className="mt-6 text-center"
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          viewport={{ once: true }}
+        >
           <Link 
             to="/campus-life"
-            className="bg-white/10 backdrop-blur-sm text-white px-8 py-3 rounded-full font-medium hover:bg-white/20 transition-colors inline-flex items-center"
+            className="bg-white/10 backdrop-blur-sm text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-white/15 transition-all inline-flex items-center"
           >
-            <span>Explore Campus Life</span>
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <span>View All Campus Photos</span>
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
             </svg>
           </Link>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

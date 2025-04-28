@@ -1710,3 +1710,104 @@ export const NAV_LINKS = [
       coverImage: 'https://source.unsplash.com/random/300x400/?machine,learning'
     }
   ];
+
+  export const images = [
+    {
+      id: 1,
+      src: "https://www.rgpv.ac.in/images/slider/new_slide1.jpg",
+      title: "Main Campus Building",
+      category: "Campus",
+      link: "/campus-life"
+    },
+    {
+      id: 2,
+      src: "https://www.rgpv.ac.in/images/slider/new_slide3.jpg",
+      title: "Modern Library",
+      category: "Academics",
+      link: "/academics"
+    },
+    {
+      id: 3,
+      src: "https://rgpv.ac.in/images/slider/slider-img3.jpg",
+      title: "Research Labs",
+      category: "Research",
+      link: "/research"
+    },
+    {
+      id: 4,
+      src: "https://www.rgpv.ac.in/images/slider/new_slide4.jpg",
+      title: "Computer Science Lab",
+      category: "Labs",
+      link: "/academics/cse"
+    },
+    {
+      id: 5,
+      src: "https://www.rgpv.ac.in/images/slider/new_slide2.jpg",
+      title: "Student Activities",
+      category: "Events",
+      link: "/events"
+    },
+    {
+      id: 6,
+      src: "https://rgpv.ac.in/images/slider/slider-img1.jpg",
+      title: "Graduation Day",
+      category: "Convocation",
+      link: "/achievements"
+    },
+    {
+      id: 7,
+      src: "https://rgpv.ac.in/images/slider/slider-img2.jpg",
+      title: "Cultural Festival",
+      category: "Fests",
+      link: "/fests"
+    },
+    {
+      id: 8,
+      src: "https://www.rgpv.ac.in/images/slider/new_slide5.jpg",
+      title: "Sports Complex",
+      category: "Sports",
+      link: "/sports"
+    },
+    {
+      id: 9,
+      src: "https://rgpv.ac.in/images/slider/slider-img5.jpg",
+      title: "Innovation Hub",
+      category: "Innovation",
+      link: "/innovation"
+    },
+    {
+      id: 10,
+      src: "https://www.rgpv.ac.in/images/slider/new_slide1.jpg",
+      title: "Student Hostel",
+      category: "Accommodation",
+      link: "/hostels"
+    },
+    {
+      id: 11,
+      src: "https://rgpv.ac.in/images/slider/slider-img2.jpg",
+      title: "Technical Workshop",
+      category: "Workshops",
+      link: "/workshops"
+    },
+    {
+      id: 12,
+      src: "https://rgpv.ac.in/images/slider/slider-img3.jpg",
+      title: "Placement Drive",
+      category: "Placements",
+      link: "/placements"
+    },
+    {
+      id: 13,
+      src: "https://www.rgpv.ac.in/images/slider/new_slide3.jpg",
+      title: "Green Campus",
+      category: "Environment",
+      link: "/campus-life"
+    },
+    {
+      id: 14,
+      src: "https://www.rgpv.ac.in/images/slider/new_slide5.jpg",
+      title: "Robotics Competition",
+      category: "Competitions",
+      link: "/competitions"
+    }
+  ];
