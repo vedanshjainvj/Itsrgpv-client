@@ -21,7 +21,7 @@ const Home = () => {
       <NssNccSection />
       <AchievementsCarousel />
       <FestsSection />
-      <StartupsSection />
+      {/* <StartupsSection /> */}
       <PartnersMarquee />
       <ResourcesCTA />
       <GlimpsesGrid />

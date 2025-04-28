@@ -1,3 +1,11 @@
+import logo1 from '../assets/asperlogo4.png';
+import logo2 from '../assets/code4all3.png';
+import logo3 from '../assets/codinglogo.png';
+import logo4 from '../assets/domeclublogo.jpg';
+import logo5 from '../assets/fclogo4.png';
+import logo6 from '../assets/innovationsecelogo.jpg';
+import logo7 from '../assets/insynclogo.png';
+
 export const NAV_LINKS = [
   { path: '/', label: 'Home' },
   { path: '/fests', label: 'Fests' },
@@ -282,50 +290,44 @@ export const NAV_LINKS = [
     {
       id: 1,
       name: 'Microsoft',
-      logo: 'https://source.unsplash.com/random/200x100/?microsoft,logo',
+      logo: logo1,
       type: 'technology'
     },
     {
       id: 2,
       name: 'IBM Research',
-      logo: 'https://source.unsplash.com/random/200x100/?ibm,logo',
+      logo: logo2,
       type: 'research'
     },
     {
       id: 3,
       name: 'Tata Consultancy Services',
-      logo: 'https://source.unsplash.com/random/200x100/?tcs,logo',
+      logo: logo3,
       type: 'industry'
     },
     {
       id: 4,
       name: 'Infosys',
-      logo: 'https://source.unsplash.com/random/200x100/?infosys,logo',
+      logo: logo4,
       type: 'industry'
     },
     {
       id: 5,
       name: 'Google',
-      logo: 'https://source.unsplash.com/random/200x100/?google,logo',
+      logo: logo5,
       type: 'technology'
     },
     {
       id: 6,
       name: 'Intel',
-      logo: 'https://source.unsplash.com/random/200x100/?intel,logo',
+      logo: logo6,
       type: 'technology'
     },
     {
       id: 7,
       name: 'Siemens',
-      logo: 'https://source.unsplash.com/random/200x100/?siemens,logo',
+      logo: logo7,
       type: 'industry'
-    },
-    {
-      id: 8,
-      name: 'National Science Foundation',
-      logo: 'https://source.unsplash.com/random/200x100/?science,logo',
-      type: 'research'
     }
   ];
   
