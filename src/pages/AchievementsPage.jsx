@@ -5,6 +5,7 @@ import { STUDENT_ACHIEVEMENTS } from '../utils/constants';
 import AchievementCard from '../components/sections/AchievementCard';
 import AchievementModal from '../components/sections/AchievementModal';
 import AchievementsFilter from '../components/sections/AchievementsFilter';
+import achievementsApi from '../services/api/achievements';
 
 const AchievementsPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -12,29 +13,56 @@ const AchievementsPage = () => {
   const [activeBranch, setActiveBranch] = useState('all');
   const [activeYear, setActiveYear] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
-  const [filteredAchievements, setFilteredAchievements] = useState(STUDENT_ACHIEVEMENTS);
+  const [achievements, setAchievements] = useState([]);
+  const [filteredAchievements, setFilteredAchievements] = useState([]);
   const [selectedAchievement, setSelectedAchievement] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   const { scrollYProgress } = useScroll();
   const headerOpacity = useTransform(scrollYProgress, [0, 0.1], [1, 0]);
   const headerTranslateY = useTransform(scrollYProgress, [0, 0.1], [0, -100]);
-
   // Calculate filter count
   const filterCount = 
     (activeCategory !== 'all' ? 1 : 0) + 
     (activeBranch !== 'all' ? 1 : 0) + 
     (activeYear !== 'all' ? 1 : 0);
 
+  // Fetch achievements from API
   useEffect(() => {
-    // Filter achievements based on search query and active filters
-    const filtered = STUDENT_ACHIEVEMENTS.filter(achievement => {
+    const fetchAchievements = async () => {
+      try {
+        setLoading(true);
+        console.log('Fetching achievements from API...');
+        const result = await achievementsApi.getAchievements();
+        setAchievements(result.achievements);
+        setFilteredAchievements(result.achievements);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching achievements:', err);
+        setError('Failed to load achievements. Using sample data instead.');
+        setAchievements(STUDENT_ACHIEVEMENTS);
+        setFilteredAchievements(STUDENT_ACHIEVEMENTS);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAchievements();
+  }, []);
+
+  // Filter achievements based on search query and active filters
+  useEffect(() => {
+    if (!achievements.length) return;
+    
+    const filtered = achievements.filter(achievement => {
       // Search query filter
       const searchMatch = searchQuery === '' || 
         achievement.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         achievement.achievement.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        achievement.headline.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        achievement.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (achievement.headline && achievement.headline.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (achievement.description && achievement.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (achievement.skills && achievement.skills.some(skill => skill.toLowerCase().includes(searchQuery.toLowerCase())));
       
       // Category filter
@@ -44,13 +72,14 @@ const AchievementsPage = () => {
       const branchMatch = activeBranch === 'all' || achievement.branch === activeBranch;
       
       // Year filter
-      const yearMatch = activeYear === 'all' || achievement.year === activeYear;
+      const yearMatch = activeYear === 'all' || 
+        (achievement.year && achievement.year.toString() === activeYear);
       
       return searchMatch && categoryMatch && branchMatch && yearMatch;
     });
     
     setFilteredAchievements(filtered);
-  }, [searchQuery, activeCategory, activeBranch, activeYear]);
+  }, [searchQuery, activeCategory, activeBranch, activeYear, achievements]);
 
   const handleViewDetails = (achievement) => {
     setSelectedAchievement(achievement);
@@ -68,18 +97,16 @@ const AchievementsPage = () => {
     setActiveYear('all');
     setSearchQuery('');
   };
-
   // Get categories with counts
   const getCategoryCounts = () => {
     const counts = {};
-    STUDENT_ACHIEVEMENTS.forEach(achievement => {
+    achievements.forEach(achievement => {
       counts[achievement.category] = (counts[achievement.category] || 0) + 1;
     });
     return counts;
   };
   
   const categoryCounts = getCategoryCounts();
-
   return (
     <div className="min-h-screen bg-black py-24 px-4 sm:px-6 relative overflow-x-hidden">
       {/* Background elements */}
@@ -112,8 +139,19 @@ const AchievementsPage = () => {
         ))}
       </div>
       
-      <div className="max-w-7xl mx-auto relative z-10">
-        {/* Hero Section */}
+      {loading ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+        </div>
+      ) : (
+        <div className="max-w-7xl mx-auto relative z-10">
+          {error && (
+            <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-4 mb-8">
+              <p className="text-red-200">{error}</p>
+            </div>
+          )}
+          
+          {/* Hero Section */}
         <motion.div 
           className="text-center mb-12"
           style={{ opacity: headerOpacity, y: headerTranslateY }}
@@ -194,9 +232,7 @@ const AchievementsPage = () => {
               <h2 className="text-2xl font-bold text-white">Achievement Categories</h2>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {Object.entries(categoryCounts).map(([category, count], index) => {
-                const categoryInfo = STUDENT_ACHIEVEMENTS.find(a => a.category === category);
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">              {Object.entries(categoryCounts).map(([category, count], index) => {
                 const colorMap = {
                   academic: 'from-blue-500 to-cyan-400',
                   research: 'from-purple-500 to-violet-400',
@@ -278,9 +314,8 @@ const AchievementsPage = () => {
                 </button>
               </div>
             </motion.div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredAchievements.map((achievement, index) => (
+          ) : (            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredAchievements.map((achievement) => (
                 <AchievementCard 
                   key={achievement.id} 
                   achievement={achievement} 
@@ -321,7 +356,7 @@ const AchievementsPage = () => {
           </div>
         </motion.div>
       </div>
-      
+      )}
       {/* Achievement Modal */}
       <AchievementModal 
         achievement={selectedAchievement} 

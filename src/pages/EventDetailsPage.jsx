@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiCalendar, FiMapPin, FiUsers, FiArrowLeft, FiClock, FiMail, FiPhone, FiTag, FiChevronRight, FiCheck, FiExternalLink } from 'react-icons/fi';
-import { EVENTS } from '../utils/constants';
+import eventsApi from '../services/api/events';
 
 const EventDetailsPage = () => {
   const { id } = useParams();
@@ -10,20 +10,36 @@ const EventDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [activeDay, setActiveDay] = useState(0);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [relatedEvents, setRelatedEvents] = useState([]);
   
   useEffect(() => {
-    // Find the event by ID
-    const foundEvent = EVENTS.find(e => e.id === id);
-    
-    if (foundEvent) {
-      setEvent(foundEvent);
-      // If we have a schedule, set the active day to the first day
-      if (foundEvent.schedule && foundEvent.schedule.length > 0) {
-        setActiveDay(0);
+    const fetchEvent = async () => {
+      setLoading(true);
+      try {
+        const eventData = await eventsApi.getEventById(id);
+        setEvent(eventData);
+        // If we have a schedule, set the active day to the first day
+        if (eventData.schedule && eventData.schedule.length > 0) {
+          setActiveDay(0);
+        }
+        
+        // Fetch all events to find related ones
+        const eventsResponse = await eventsApi.getEvents();
+        if (eventsResponse && eventsResponse.events) {
+          const related = eventsResponse.events
+            .filter(e => e.category === eventData.category && e.id !== eventData.id)
+            .slice(0, 3);
+          setRelatedEvents(related);
+        }
+      } catch (error) {
+        console.error('Error fetching event:', error);
+        setEvent(null);
+      } finally {
+        setLoading(false);
       }
-    }
+    };
     
-    setLoading(false);
+    fetchEvent();
     
     // Scroll to top
     window.scrollTo(0, 0);
@@ -331,7 +347,7 @@ const EventDetailsPage = () => {
                     href={event.registrationLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block w-full py-3 text-center text-white bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg font-medium hover:shadow-lg hover:shadow-purple-500/25 transition-all mb-3 flex items-center justify-center"
+                    className="w-full py-3 text-center text-white bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg font-medium hover:shadow-lg hover:shadow-purple-500/25 transition-all mb-3 flex items-center justify-center"
                   >
                     Register Now
                     <FiExternalLink className="ml-2" size={16} />
@@ -385,13 +401,12 @@ const EventDetailsPage = () => {
         </div>
         
         {/* Related Events Section */}
-        <div className="mb-16">
-          <h2 className="text-2xl font-bold text-white mb-6">Similar Events</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {EVENTS.filter(e => e.category === event.category && e.id !== event.id)
-              .slice(0, 3)
-              .map(relatedEvent => (
+        {relatedEvents.length > 0 && (
+          <div className="mb-16">
+            <h2 className="text-2xl font-bold text-white mb-6">Similar Events</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {relatedEvents.map(relatedEvent => (
                 <Link 
                   key={relatedEvent.id} 
                   to={`/events/${relatedEvent.id}`}
@@ -425,8 +440,9 @@ const EventDetailsPage = () => {
                   </div>
                 </Link>
               ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
       
       {/* Photo Lightbox */}

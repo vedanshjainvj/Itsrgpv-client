@@ -6,33 +6,36 @@ import {
   FiMail, FiPhone, FiStar, FiArrowLeft, FiClock, FiCheck, 
   FiShield, FiMaximize, FiChevronLeft, FiChevronRight, FiX 
 } from 'react-icons/fi';
-import { HOSTELS } from '../utils/hostelConstants';
+import hostelsApi from '../services/api/hostels';
 
 const HostelDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [hostel, setHostel] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [imageCategory, setImageCategory] = useState('all');
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   
   useEffect(() => {
-    // Find the hostel by id
-    const fetchedHostel = HOSTELS.find(h => h.id === id);
-    
-    if (fetchedHostel) {
-      setHostel(fetchedHostel);
-      setLoading(false);
-    } else {
-      // Hostel not found, redirect to hostels page
-      navigate('/hostels');
-    }
-    
-    // Scroll to top when component mounts
+    const fetchHostel = async () => {
+      try {
+        const fetchedHostel = await hostelsApi.getHostelById(id);
+        setHostel(fetchedHostel);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching hostel:', err);
+        setError('Failed to load hostel details. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHostel();
     window.scrollTo(0, 0);
-  }, [id, navigate]);
+  }, [id]);
   
   if (loading) {
     return (
@@ -40,6 +43,24 @@ const HostelDetailPage = () => {
         <div className="text-white text-center">
           <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p>Loading hostel information...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !hostel) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center bg-white/5 backdrop-blur-sm rounded-xl p-8 max-w-md mx-auto">
+          <FiHome className="w-12 h-12 text-red-400 mx-auto mb-4" />
+          <h3 className="text-white text-xl font-medium mb-2">Error</h3>
+          <p className="text-gray-400 mb-6">{error || 'Hostel not found'}</p>
+          <button 
+            onClick={() => navigate('/hostels')}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors"
+          >
+            Back to Hostels
+          </button>
         </div>
       </div>
     );

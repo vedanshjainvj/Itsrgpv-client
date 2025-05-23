@@ -6,7 +6,6 @@ import EventsFilter from '../components/sections/EventFilters';
 import eventsApi from '../services/api/events';
 
 const EventsPage = () => {
-  // State management
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [timeFilter, setTimeFilter] = useState('all');
@@ -17,7 +16,6 @@ const EventsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // Animation properties
   const { scrollYProgress } = useScroll();
   const headerOpacity = useTransform(scrollYProgress, [0, 0.1], [1, 0]);
   const headerTranslateY = useTransform(scrollYProgress, [0, 0.1], [0, -100]);
@@ -50,7 +48,6 @@ const EventsPage = () => {
     fetchEvents();
   }, []);
 
-  // Filter events when search query or filters change
   useEffect(() => {
     // Get current date
     const currentDate = new Date();
@@ -67,8 +64,8 @@ const EventsPage = () => {
       // Search query filter
       const searchMatch = searchQuery === '' || 
         event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (event.description && event.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (event.shortDescription && event.shortDescription.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        event.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        event.shortDescription.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (Array.isArray(event.tags) && event.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())));
       
       // Category filter
@@ -100,7 +97,6 @@ const EventsPage = () => {
     setFilteredEvents(filtered);
   }, [searchQuery, activeCategory, timeFilter, showFeaturedOnly, events]);
 
-  // Reset all filters
   const clearFilters = () => {
     setActiveCategory('all');
     setTimeFilter('all');
@@ -241,130 +237,127 @@ const EventsPage = () => {
         ) : (
           <>
             {/* Featured Events Section (visible when no search or filters) */}
-            {searchQuery === '' && activeCategory === 'all' && timeFilter === 'all' && !showFeaturedOnly && featuredEvents.length > 0 && (
-              <motion.div 
-                className="mb-8"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-              >
-                <div className="flex items-center mb-4">
-                  <div className="w-2 h-8 bg-gradient-to-b from-purple-500 to-pink-500 rounded-full mr-3"></div>
-                  <h2 className="text-2xl font-bold text-white">Featured Events</h2>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {featuredEvents.map(event => (
-                    <EventCard key={event.id} event={event} />
-                  ))}
-                </div>
-              </motion.div>
-            )}
+            {searchQuery === '' && activeCategory === 'all' && timeFilter === 'all' && !showFeaturedOnly && (
+          <>
+            <motion.div 
+              className="mb-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <div className="flex items-center mb-4">
+                <div className="w-2 h-8 bg-gradient-to-b from-purple-500 to-pink-500 rounded-full mr-3"></div>
+                <h2 className="text-2xl font-bold text-white">Featured Events</h2>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {featuredEvents.map(event => (
+                  <EventCard key={event.id} event={event} />
+                ))}
+              </div>
+            </motion.div>
             
-            {/* Upcoming Events Section (visible when no search or filters) */}
-            {searchQuery === '' && activeCategory === 'all' && timeFilter === 'all' && !showFeaturedOnly && upcomingEvents.length > 0 && (
-              <motion.div 
-                className="mb-12"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-              >
-                <div className="flex items-center mb-4">
-                  <div className="w-2 h-8 bg-gradient-to-b from-blue-500 to-cyan-500 rounded-full mr-3"></div>
-                  <h2 className="text-2xl font-bold text-white">Upcoming Events</h2>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {upcomingEvents.map(event => (
-                    <div key={event.id} className="bg-white/5 rounded-xl p-4 backdrop-blur-sm border border-white/10 hover:shadow-md transition-all">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <span className={`inline-block h-2 w-2 rounded-full ${
-                          event.category === 'technical' ? 'bg-blue-500' :
-                          event.category === 'cultural' ? 'bg-pink-500' :
-                          event.category === 'sports' ? 'bg-green-500' :
-                          event.category === 'management' ? 'bg-purple-500' :
-                          event.category === 'academic' ? 'bg-yellow-500' :
-                          'bg-orange-500'
-                        }`}></span>
-                        <span className="text-gray-400 text-xs">{event.category.charAt(0).toUpperCase() + event.category.slice(1)}</span>
-                      </div>
-                      
-                      <h3 className="text-white font-bold mb-2 truncate">{event.title}</h3>
-                      
-                      <div className="flex items-center text-gray-400 text-xs mb-2">
-                        <FiCalendar className="mr-1" size={14} />
-                        <span>{new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                      </div>
-                      
-                      <div className="flex items-center text-gray-400 text-xs mb-3">
-                        <FiMapPin className="mr-1" size={14} />
-                        <span className="truncate">{event.location}</span>
-                      </div>
-                      
-                      <motion.div 
-                        className="text-center text-sm px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:shadow-lg hover:shadow-purple-500/25 transition-all cursor-pointer"
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        Register Now
-                      </motion.div>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-            
-            {/* Main Event Grid - Shows when filters are applied or always if there are no featured/upcoming events */}
             <motion.div 
               className="mb-12"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
             >
-              {/* Title & Result Count - Only show when filters are applied */}
-              {(searchQuery !== '' || activeCategory !== 'all' || timeFilter !== 'all' || showFeaturedOnly) && (
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <div className="w-2 h-8 bg-gradient-to-b from-pink-500 to-purple-500 rounded-full mr-3"></div>
-                    <h2 className="text-2xl font-bold text-white">
-                      {filteredEvents.length} {filteredEvents.length === 1 ? 'Event' : 'Events'} Found
-                    </h2>
-                  </div>
-                </div>
-              )}
+              <div className="flex items-center mb-4">
+                <div className="w-2 h-8 bg-gradient-to-b from-blue-500 to-cyan-500 rounded-full mr-3"></div>
+                <h2 className="text-2xl font-bold text-white">Upcoming Events</h2>
+              </div>
               
-              {filteredEvents.length === 0 ? (
-                <motion.div 
-                  className="text-center py-16"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.5 }}
-                >
-                  <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 max-w-md mx-auto">
-                    <FiSearch className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-white text-xl font-medium mb-2">No events found</h3>
-                    <p className="text-gray-400 mb-6">Try adjusting your search or filter criteria.</p>
-                    <button 
-                      onClick={clearFilters}
-                      className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-2 rounded-lg transition-colors"
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {upcomingEvents.map(event => (
+                  <div key={event.id} className="bg-white/5 rounded-xl p-4 backdrop-blur-sm border border-white/10 hover:shadow-md transition-all">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <span className={`inline-block h-2 w-2 rounded-full ${
+                        event.category === 'technical' ? 'bg-blue-500' :
+                        event.category === 'cultural' ? 'bg-pink-500' :
+                        event.category === 'sports' ? 'bg-green-500' :
+                        event.category === 'management' ? 'bg-purple-500' :
+                        event.category === 'academic' ? 'bg-yellow-500' :
+                        'bg-orange-500'
+                      }`}></span>
+                      <span className="text-gray-400 text-xs">{event.category.charAt(0).toUpperCase() + event.category.slice(1)}</span>
+                    </div>
+                    
+                    <h3 className="text-white font-bold mb-2 truncate">{event.title}</h3>
+                    
+                    <div className="flex items-center text-gray-400 text-xs mb-2">
+                      <FiCalendar className="mr-1" size={14} />
+                      <span>{new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                    </div>
+                    
+                    <div className="flex items-center text-gray-400 text-xs mb-3">
+                      <FiMapPin className="mr-1" size={14} />
+                      <span className="truncate">{event.location}</span>
+                    </div>
+                    
+                    <motion.div 
+                      className="text-center text-sm px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:shadow-lg hover:shadow-purple-500/25 transition-all cursor-pointer"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                     >
-                      Clear all filters
-                    </button>
+                      Register Now
+                    </motion.div>
                   </div>
-                </motion.div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredEvents.map(event => (
-                    <EventCard 
-                      key={event.id} 
-                      event={event} 
-                    />
-                  ))}
-                </div>
-              )}
+                ))}
+              </div>
             </motion.div>
           </>
         )}
+        
+        {/* Main Event Grid */}
+        <motion.div 
+          className="mb-12"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+        >
+          {/* Title & Result Count */}
+          {(searchQuery !== '' || activeCategory !== 'all' || timeFilter !== 'all' || showFeaturedOnly) && (
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <div className="w-2 h-8 bg-gradient-to-b from-pink-500 to-purple-500 rounded-full mr-3"></div>
+                <h2 className="text-2xl font-bold text-white">
+                  {filteredEvents.length} {filteredEvents.length === 1 ? 'Event' : 'Events'} Found
+                </h2>
+              </div>
+            </div>
+          )}
+          
+          {filteredEvents.length === 0 ? (
+            <motion.div 
+              className="text-center py-16"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 max-w-md mx-auto">
+                <FiSearch className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-white text-xl font-medium mb-2">No events found</h3>
+                <p className="text-gray-400 mb-6">Try adjusting your search or filter criteria.</p>
+                <button 
+                  onClick={clearFilters}
+                  className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-2 rounded-lg transition-colors"
+                >
+                  Clear all filters
+                </button>
+              </div>
+            </motion.div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredEvents.map((event, index) => (
+                <EventCard 
+                  key={event.id} 
+                  event={event} 
+                />
+              ))}
+            </div>
+          )}
+        </motion.div>
       </div>
     </div>
   );

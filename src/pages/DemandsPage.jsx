@@ -5,28 +5,56 @@ import { STUDENT_DEMANDS } from '../utils/constants';
 import DemandCard from '../components/sections/DemandCard';
 import DemandModal from '../components/sections/DemandModal';
 import DemandsFilter from '../components/sections/DemandsFilter';
+import demandsApi from '../services/api/demands';
 
 const DemandsPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
   const [activeStatus, setActiveStatus] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
-  const [filteredDemands, setFilteredDemands] = useState(STUDENT_DEMANDS);
+  const [demands, setDemands] = useState([]);
+  const [filteredDemands, setFilteredDemands] = useState([]);
   const [selectedDemand, setSelectedDemand] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
   const { scrollYProgress } = useScroll();
   const headerOpacity = useTransform(scrollYProgress, [0, 0.1], [1, 0]);
   const headerTranslateY = useTransform(scrollYProgress, [0, 0.1], [0, -100]);
-
+  // Fetch demands from API
   useEffect(() => {
-    // Filter demands based on search query and active filters
-    const filtered = STUDENT_DEMANDS.filter(demand => {
+    const fetchDemands = async () => {
+      try {
+        setLoading(true);
+        console.log('Fetching demands from API...');
+        const result = await demandsApi.getDemands();
+        setDemands(result.demands);
+        setFilteredDemands(result.demands);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching demands:', err);
+        setError('Failed to load demands. Using sample data instead.');
+        setDemands(STUDENT_DEMANDS);
+        setFilteredDemands(STUDENT_DEMANDS);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDemands();
+  }, []);
+
+  // Filter demands based on search query and active filters
+  useEffect(() => {
+    if (!demands.length) return;
+    
+    const filtered = demands.filter(demand => {
       // Search query filter
       const searchMatch = searchQuery === '' || 
         demand.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         demand.shortDescription.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        demand.description.toLowerCase().includes(searchQuery.toLowerCase());
+        (demand.description && demand.description.toLowerCase().includes(searchQuery.toLowerCase()));
       
       // Category filter
       const categoryMatch = activeCategory === 'all' || demand.category === activeCategory;
@@ -38,7 +66,7 @@ const DemandsPage = () => {
     });
     
     setFilteredDemands(filtered);
-  }, [searchQuery, activeCategory, activeStatus]);
+  }, [searchQuery, activeCategory, activeStatus, demands]);
 
   const handleOpenModal = (demand) => {
     setSelectedDemand(demand);
@@ -55,7 +83,6 @@ const DemandsPage = () => {
     setActiveStatus('all');
     setSearchQuery('');
   };
-
   return (
     <div className="min-h-screen bg-black py-24 px-4 sm:px-6 relative overflow-x-hidden">
       {/* Background elements */}
@@ -87,8 +114,18 @@ const DemandsPage = () => {
           />
         ))}
       </div>
-      
-      <div className="max-w-7xl mx-auto relative z-10">
+        {loading ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+          <p className="text-white ml-4">Loading demands...</p>
+        </div>
+      ) : (
+        <div className="max-w-7xl mx-auto relative z-10">
+          {error && (
+            <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-4 mb-8">
+              <p className="text-red-200">{error}</p>
+            </div>
+          )}
         {/* Hero Section */}
         <motion.div 
           className="text-center mb-12"
@@ -166,8 +203,7 @@ const DemandsPage = () => {
             Submit New Demand
           </button>
         </motion.div>
-        
-        {/* Demand Cards */}
+          {/* Demand Cards */}
         {filteredDemands.length === 0 ? (
           <motion.div 
             className="text-center py-16"
@@ -178,18 +214,23 @@ const DemandsPage = () => {
             <div className="bg-white/5 backdrop-blur-sm rounded-xl p-8 max-w-md mx-auto">
               <FiSearch className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-white text-xl font-medium mb-2">No demands found</h3>
-              <p className="text-gray-400 mb-6">Try adjusting your search or filter criteria.</p>
-              <button 
-                onClick={clearFilters}
-                className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-2 rounded-lg transition-colors"
-              >
-                Clear all filters
-              </button>
+              <p className="text-gray-400 mb-6">
+                {searchQuery || activeCategory !== 'all' || activeStatus !== 'all' ? 
+                  'Try adjusting your search or filter criteria.' : 
+                  'There are no demands in the system yet.'}
+              </p>
+              {(searchQuery || activeCategory !== 'all' || activeStatus !== 'all') && (
+                <button 
+                  onClick={clearFilters}
+                  className="bg-purple-500 hover:bg-purple-600 text-white px-6 py-2 rounded-lg transition-colors"
+                >
+                  Clear all filters
+                </button>
+              )}
             </div>
           </motion.div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-            {filteredDemands.map((demand, index) => (
+        ) : (<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            {filteredDemands.map((demand) => (
               <DemandCard 
                 key={demand.id} 
                 demand={demand} 
@@ -208,7 +249,7 @@ const DemandsPage = () => {
           </div>
         )}
       </div>
-      
+      )}
       {/* Modal */}
       <DemandModal 
         demand={selectedDemand} 
