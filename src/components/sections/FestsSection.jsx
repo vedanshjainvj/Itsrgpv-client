@@ -1,11 +1,31 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { FESTS } from '../../utils/constants';
+import festsApi from '../../services/api/fests';
 
 const FestsSection = () => {
   const [activeFestIndex, setActiveFestIndex] = useState(0);
+  const [festsData, setFestsData] = useState(FESTS);
   
-  const activeFest = FESTS[activeFestIndex];
+  // Fetch fests from API
+  useEffect(() => {
+    const fetchFests = async () => {
+      try {
+        const response = await festsApi.getFests();
+        if (response && response.fests && response.fests.length > 0) {
+          setFestsData(response.fests);
+        }
+      } catch (err) {
+        console.error('Error fetching fests:', err);
+        // Keep the default FESTS data on error
+      }
+    };
+    
+    fetchFests();
+  }, []);
+  
+  const activeFest = festsData[activeFestIndex];
   
   return (
     <section className="py-20 bg-black relative overflow-hidden">
@@ -25,7 +45,7 @@ const FestsSection = () => {
         
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           <div className="lg:col-span-4 space-y-4">
-            {FESTS.map((fest, index) => (
+            {festsData.map((fest, index) => (
               <motion.div
                 key={fest.id}
                 initial={{ opacity: 0, x: -20 }}
@@ -146,9 +166,15 @@ const FestsSection = () => {
                   </div>
                   
                   <div className="flex justify-between items-center">
-                    <button className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors">
-                      Register Now
-                    </button>
+                    <Link 
+                      to={`/fests/${activeFest.id}`}
+                      className="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors flex items-center"
+                    >
+                      View Details
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                      </svg>
+                    </Link>
                     <a href="#" className="text-gray-300 hover:text-white transition-colors flex items-center text-sm">
                       View Gallery
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">

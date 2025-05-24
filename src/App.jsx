@@ -17,6 +17,7 @@ import RaiseDemandPage from './pages/RaiseDemandPage';
 import SettingsPage from './pages/SettingsPage';
 import { AuthProvider } from './context/AuthContext';
 import FestsPage from './pages/FestsPage';
+import FestDetailPage from './pages/FestDetailPage';
 import './styles/app.css';
 
 const App = () => {
@@ -39,6 +40,7 @@ const App = () => {
             <Route path="/events" element={<EventsPage />} />
             <Route path="/events/:id" element={<EventDetailsPage />} />
             <Route path="/fests" element={<FestsPage />} />
+            <Route path="/fests/:id" element={<FestDetailPage />} />
             
             {/* Profile Routes */}
             <Route path="/profile" element={<ProfilePage />} />

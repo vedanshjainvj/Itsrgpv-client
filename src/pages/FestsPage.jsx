@@ -2,34 +2,60 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { FiCalendar, FiMapPin, FiUsers, FiArrowRight, FiFilter, FiSearch, FiX } from 'react-icons/fi';
-import { FESTS } from '../utils/constants';
+import festsApi from '../services/api/fests';
+import { FESTS } from '../utils/constants'; // Keep for fallback
 
 const FestsPage = () => {
   const [activeFilter, setActiveFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [festsData, setFestsData] = useState(FESTS);
+  const [festsData, setFestsData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { scrollYProgress } = useScroll();
   const headerOpacity = useTransform(scrollYProgress, [0, 0.1], [1, 0]);
   const headerTranslateY = useTransform(scrollYProgress, [0, 0.1], [0, -100]);
 
+  // Fetch fests data from API
   useEffect(() => {
-    // Filter fests based on search query and active filter
-    const filtered = FESTS.filter(fest => {
-      // Search query filter
-      const searchMatch = searchQuery === '' || 
-        fest.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        fest.tagline.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        fest.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        fest.events.some(event => event.toLowerCase().includes(searchQuery.toLowerCase()));
-      
-      // Category filter
-      const categoryMatch = activeFilter === 'all' || fest.id.includes(activeFilter);
-      
-      return searchMatch && categoryMatch;
-    });
+    const fetchFests = async () => {
+      try {
+        setIsLoading(true);
+        const response = await festsApi.getFests();
+        if (response && response.fests && response.fests.length > 0) {
+          setFestsData(response.fests);
+        } else {
+          // Fallback to static data if API returns empty
+          console.log('No data from API, using static data');
+          setFestsData(FESTS);
+        }
+      } catch (err) {
+        console.error('Error fetching fests:', err);
+        // Use static data on error
+        setFestsData(FESTS);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchFests();
+  }, []);
+
+  // Filter fests based on search and filter
+  const filteredFests = festsData.filter(fest => {
+    // Search query filter
+    const searchMatch = searchQuery === '' || 
+      fest.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      fest.tagline?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      fest.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      fest.events?.some(event => event.toLowerCase().includes(searchQuery.toLowerCase()));
     
-    setFestsData(filtered);
-  }, [searchQuery, activeFilter]);
+    // Category filter
+    const categoryMatch = activeFilter === 'all' || fest.id?.includes(activeFilter);
+    
+    return searchMatch && categoryMatch;
+  });
+
+  // Use the same data for upcoming section too
+  const upcomingFests = festsData.length > 0 ? festsData : FESTS;
 
   return (
     <div className="min-h-screen bg-black relative overflow-hidden">
@@ -184,7 +210,7 @@ const FestsPage = () => {
           </div>
         </motion.div>
         
-        {festsData.length === 0 ? (
+        {filteredFests.length === 0 ? (
           <motion.div 
             className="text-center py-16"
             initial={{ opacity: 0 }}
@@ -208,7 +234,7 @@ const FestsPage = () => {
           </motion.div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
-            {festsData.map((fest, index) => (
+            {filteredFests.map((fest, index) => (
               <motion.div
                 key={fest.id}
                 className="group relative overflow-hidden rounded-2xl border border-white/10 bg-black/50 backdrop-blur-sm hover:shadow-xl hover:shadow-purple-500/10 transition-all"
@@ -310,7 +336,7 @@ const FestsPage = () => {
           </motion.div>
           
           <div className="flex overflow-x-auto pb-8 space-x-6 scrollbar-hide">
-            {FESTS.map((fest, index) => (
+            {upcomingFests.map((fest, index) => (
               <motion.div
                 key={fest.id}
                 className="bg-black/50 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden flex-shrink-0 w-80"
