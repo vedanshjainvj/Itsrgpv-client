@@ -1,6 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef ,useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiCpu, FiDatabase, FiTruck, FiDroplet, FiHome, FiTool, FiZap, FiRadio, FiServer, FiBriefcase, FiAward, FiChevronRight } from 'react-icons/fi';
+import departmentsApi from '../../services/api/departments';
 
 // Department data with all departments
 const DEPARTMENTS = [
@@ -244,6 +245,53 @@ const shinyStyles = `
 const CompactDepartmentsSection = () => {
   const [selectedDept, setSelectedDept] = useState(null);
   const containerRef = useRef(null);
+  const [departments, setDepartments] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Icon mapping - maps icon type strings to React components
+  const iconMap = {
+    'FiCpu': <FiCpu />,
+    'FiDatabase': <FiDatabase />,
+    'FiTruck': <FiTruck />,
+    'FiDroplet': <FiDroplet />,
+    'FiHome': <FiHome />,
+    'FiTool': <FiTool />,
+    'FiZap': <FiZap />,
+    'FiRadio': <FiRadio />,
+    'FiServer': <FiServer />,
+    'FiBriefcase': <FiBriefcase />,
+    'FiAward': <FiAward />,
+  };
+
+  // Fetch departments data from API
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        setIsLoading(true);
+        const response = await departmentsApi.getDepartments();
+        if (response && response.departments && response.departments.length > 0) {
+          // Process the departments to add React icon components
+          const processedDepts = response.departments.map(dept => ({
+            ...dept,
+            icon: iconMap[dept.icon] || <FiAward /> // Use the mapped icon or default
+          }));
+          setDepartments(processedDepts);
+        } else {
+          // Fallback to static data
+          console.log('No data from API, using static data');
+          setDepartments(DEPARTMENTS);
+        }
+      } catch (err) {
+        console.error('Error fetching departments:', err);
+        // Use static data on error
+        setDepartments(DEPARTMENTS);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDepartments();
+  }, []);
   
   // Department color mapping (safe Tailwind colors)
   const getDeptColor = (id) => {
@@ -284,6 +332,19 @@ const CompactDepartmentsSection = () => {
     setSelectedDept(selectedDept?.id === dept.id ? null : dept);
   };
 
+ if (isLoading) {
+    return (
+      <section className="relative py-12 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 relative z-10">
+          <div className="flex justify-center items-center h-40">
+            <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="ml-3 text-gray-400">Loading departments...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section 
       ref={containerRef}
@@ -312,7 +373,7 @@ const CompactDepartmentsSection = () => {
         <div className="mb-8">
           <div className="flex overflow-x-auto pb-4 scrollbar-hide -mx-2">
             <div className="flex space-x-3 px-2 mx-auto">
-              {DEPARTMENTS.map((dept) => (
+              {departments.map((dept) => (
                 <motion.div
                   key={dept.id}
                   whileHover={{ y: -6, scale: 1.02 }}
