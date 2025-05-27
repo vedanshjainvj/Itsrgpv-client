@@ -37,7 +37,7 @@ const mapAchievement = (item) => {
 const achievementsApi = {
   getAchievements: async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/achivement/get-achievements`);
+      const response = await axios.get(`${API_BASE_URL}/achievement/get-achievements`);
       console.log('API Response:', JSON.stringify(response.data, null, 2));
       
       if (response.data && response.data.data) {
