@@ -1,33 +1,61 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ACHIEVEMENTS } from '../../utils/constants';
+import achievementsApi from '../../services/api/achievements';
 
 const AchievementsCarousel = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [direction, setDirection] = useState(0);
   const [autoplay, setAutoplay] = useState(true);
+  const [achievements, setAchievements] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch achievements from API
+  useEffect(() => {
+    const fetchAchievements = async () => {
+      try {
+        setIsLoading(true);
+        const response = await achievementsApi.getAchievements();
+        if (response && response.achievements && response.achievements.length > 0) {
+          setAchievements(response.achievements);
+        } else {
+          // Fallback to static data if API returns empty
+          console.log('No data from API, using static data');
+          setAchievements(ACHIEVEMENTS);
+        }
+      } catch (err) {
+        console.error('Error fetching achievements:', err);
+        // Use static data on error
+        setAchievements(ACHIEVEMENTS);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAchievements();
+  }, []);
 
   useEffect(() => {
-    if (!autoplay) return;
+    if (!autoplay || achievements.length === 0) return;
     
     const timer = setTimeout(() => {
       setDirection(1);
-      setActiveIndex((prevIndex) => (prevIndex + 1) % ACHIEVEMENTS.length);
+      setActiveIndex((prevIndex) => (prevIndex + 1) % achievements.length);
     }, 6000);
     
     return () => clearTimeout(timer);
-  }, [activeIndex, autoplay, ACHIEVEMENTS.length]);
+  }, [activeIndex, autoplay, achievements.length]);
 
   const handleNext = () => {
     setAutoplay(false);
     setDirection(1);
-    setActiveIndex((prevIndex) => (prevIndex + 1) % ACHIEVEMENTS.length);
+    setActiveIndex((prevIndex) => (prevIndex + 1) % achievements.length);
   };
 
   const handlePrev = () => {
     setAutoplay(false);
     setDirection(-1);
-    setActiveIndex((prevIndex) => (prevIndex - 1 + ACHIEVEMENTS.length) % ACHIEVEMENTS.length);
+    setActiveIndex((prevIndex) => (prevIndex - 1 + achievements.length) % achievements.length);
   };
 
   const handleDotClick = (index) => {
@@ -54,6 +82,38 @@ const AchievementsCarousel = () => {
       scale: 0.9
     })
   };
+
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <section className="py-12 bg-black relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="flex justify-center items-center py-16">
+            <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="ml-3 text-gray-300">Loading achievements...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+
+  // If no achievements available
+  if (achievements.length === 0) {
+    return (
+      <section className="py-12 bg-black relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center py-16">
+            <p className="text-gray-300">No achievements found.</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const currentAchievement = achievements[activeIndex];
+
 
   return (
     <section className="py-12 bg-black relative overflow-hidden">
@@ -85,7 +145,7 @@ const AchievementsCarousel = () => {
             viewport={{ once: true }}
             className="hidden md:flex gap-2"
           >
-            {ACHIEVEMENTS.map((_, index) => (
+            {achievements.map((_, index) => (
               <button
                 key={index}
                 onClick={() => handleDotClick(index)}
@@ -122,8 +182,8 @@ const AchievementsCarousel = () => {
                     <div className="absolute inset-0 bg-gradient-to-tr from-black via-black/70 to-transparent z-10 md:hidden"></div>
                     <div className="w-full h-[220px] md:h-[280px] relative">
                       <img 
-                        src={ACHIEVEMENTS[activeIndex].image} 
-                        alt={ACHIEVEMENTS[activeIndex].student} 
+                        src={currentAchievement.profileImage} 
+                        alt={currentAchievement.name} 
                         className="absolute inset-0 w-full h-full object-cover"
                         onError={(e) => {
                           e.target.onerror = null;
@@ -133,7 +193,7 @@ const AchievementsCarousel = () => {
                     </div>
                     <div className="absolute bottom-3 left-3 z-20 md:hidden">
                       <span className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-2 py-0.5 rounded-full text-xs">
-                        {ACHIEVEMENTS[activeIndex].category}
+                        {currentAchievement.category}
                       </span>
                     </div>
                   </div>
@@ -143,19 +203,19 @@ const AchievementsCarousel = () => {
                       <div>
                         <div className="hidden md:block mb-3">
                           <span className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-2 py-0.5 rounded-full text-xs">
-                            {ACHIEVEMENTS[activeIndex].category}
+                            {currentAchievement.category}
                           </span>
                         </div>
                         
-                        <h3 className="text-xl md:text-2xl font-bold text-white mb-1">{ACHIEVEMENTS[activeIndex].student}</h3>
-                        <p className="text-gray-400 text-sm mb-2">{ACHIEVEMENTS[activeIndex].department}</p>
+                        <h3 className="text-xl md:text-2xl font-bold text-white mb-1">{currentAchievement.name}</h3>
+                        <p className="text-gray-400 text-sm mb-2">{currentAchievement.branch}</p>
                         
                         <h4 className="text-lg font-semibold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent mb-2">
-                          {ACHIEVEMENTS[activeIndex].achievement}
+                          {currentAchievement.achievement}
                         </h4>
                         
                         <p className="text-gray-300 text-sm">
-                          {ACHIEVEMENTS[activeIndex].description}
+                          {currentAchievement.description}
                         </p>
                       </div>
                       
@@ -166,7 +226,7 @@ const AchievementsCarousel = () => {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                             </svg>
                           </div>
-                          <span className="text-white text-sm">{ACHIEVEMENTS[activeIndex].year}</span>
+                          <span className="text-white text-sm">{currentAchievement.year}</span>
                         </div>
                         
                         <button className="text-white bg-white/10 hover:bg-white/20 transition-colors px-3 py-1.5 rounded-lg text-sm border border-white/10">
@@ -201,7 +261,7 @@ const AchievementsCarousel = () => {
         
         <div className="flex justify-center mt-4 md:hidden">
           <div className="flex space-x-2">
-            {ACHIEVEMENTS.map((_, index) => (
+            {achievements.map((_, index) => (
               <button
                 key={index}
                 onClick={() => handleDotClick(index)}
