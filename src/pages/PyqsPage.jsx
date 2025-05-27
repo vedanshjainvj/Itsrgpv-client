@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiDownload, FiSearch, FiFilter, FiX, FiClock, FiCalendar, FiBookOpen, FiCode } from 'react-icons/fi';
 import { SAMPLE_PYQS } from '../utils/constants';
+import pyqsApi from '../services/api/pyqs';
+
 
 const YEARS = ['2023', '2022', '2021', '2020'];
 const BRANCHES = ['CSE', 'ECE', 'ME', 'CE', 'EE'];
@@ -15,14 +17,77 @@ const PyqsPage = () => {
     types: []
   });
   const [showFilters, setShowFilters] = useState(false);
-  const [filteredPyqs, setFilteredPyqs] = useState(SAMPLE_PYQS);
+  const [pyqs, setPyqs] = useState([]);
+  const [filteredPyqs, setFilteredPyqs] = useState([]);
   const [downloadingId, setDownloadingId] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch PYQs from API
+  useEffect(() => {
+    const fetchPyqs = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        // Convert frontend filter format to backend format
+        const apiFilters = {};
+        
+        if (activeFilters.years.length > 0) {
+          apiFilters.year = activeFilters.years[0]; // Use first selected year
+        }
+        
+        if (activeFilters.branches.length > 0) {
+          apiFilters.branch = activeFilters.branches[0]; // Use first selected branch
+        }
+        
+        if (activeFilters.types.length > 0) {
+          // Convert frontend format to backend format
+          const typeMapping = {
+            'end-sem': 'endsem',
+            'mid-sem': 'midsem',
+            'assignment': 'assignment',
+            'back-paper': 'back'
+          };
+          apiFilters.type = typeMapping[activeFilters.types[0]]; // Use first selected type
+        }
+        
+        let response;
+
+        // If search query exists, use search endpoint
+        if (searchQuery.trim()) {
+          response = await pyqsApi.searchPyqs(searchQuery);
+        } else {
+          // Otherwise use filter endpoint
+          response = await pyqsApi.getPyqs(apiFilters);
+        }
+        
+        if (response && response.pyqs) {
+          setPyqs(response.pyqs);
+        } else {
+          // Fallback to static data
+          console.log('No data from API, using static data');
+          setPyqs(SAMPLE_PYQS);
+        }
+      } catch (err) {
+        console.error('Error fetching PYQs:', err);
+        setError('Failed to load question papers. Please try again later.');
+        // Use static data on error
+        setPyqs(SAMPLE_PYQS);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPyqs();
+  }, [searchQuery, activeFilters]);
+
 
   useEffect(() => {
     // Filter PyQs based on search query and active filters
-    const filtered = SAMPLE_PYQS.filter(pyq => {
-      // Search query filter
-      const searchMatch = searchQuery === '' || 
+    const filtered = pyqs.filter(pyq => {
+      // Search query filter (only if not already filtered by API)
+      const searchMatch = !searchQuery || 
         pyq.subjectName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         pyq.subjectCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
         pyq.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -40,7 +105,7 @@ const PyqsPage = () => {
     });
     
     setFilteredPyqs(filtered);
-  }, [searchQuery, activeFilters]);
+  }, [pyqs, searchQuery, activeFilters]);
 
   const handleFilterToggle = (filterType, value) => {
     setActiveFilters(prev => {
@@ -69,15 +134,20 @@ const PyqsPage = () => {
     setSearchQuery('');
   };
 
-  const handleDownload = (id) => {
+  const handleDownload = async (id) => {
     setDownloadingId(id);
     
-    // Simulate download delay
-    setTimeout(() => {
+    try {
+      await pyqsApi.downloadPyq(id);
+      console.log(`Downloaded PYQ ID: ${id}`);
+      setTimeout(() => {
+        setDownloadingId(null);
+      }, 1500);
+    } catch (err) {
+      console.error('Error downloading PYQ:', err);
       setDownloadingId(null);
-      // In a real app, you would trigger the actual download here
-      console.log(`Downloading PyQ ID: ${id}`);
-    }, 1500);
+      alert('Failed to download the question paper. Please try again.');
+    }
   };
 
   // Get the count of active filters
@@ -118,6 +188,27 @@ const PyqsPage = () => {
             Access previous year question papers, assignments, and test papers for all departments and courses.
           </motion.p>
         </div>
+
+        {/* Loading indicator */}
+        {isLoading && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-black/80 p-8 rounded-xl border border-white/10 flex flex-col items-center">
+              <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+              <p className="text-white">Loading question papers...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Error message */}
+        {error && !isLoading && (
+          <motion.div 
+            className="bg-red-900/20 border border-red-500/50 rounded-lg p-4 mb-6"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <p className="text-red-300">{error}</p>
+          </motion.div>
+        )}
         
         <motion.div 
           className="flex flex-col md:flex-row gap-4 mb-8"
@@ -242,7 +333,7 @@ const PyqsPage = () => {
           )}
         </AnimatePresence>
         
-        {filteredPyqs.length === 0 ? (
+        {!isLoading && filteredPyqs.length === 0 ? (
           <motion.div 
             className="text-center py-16"
             initial={{ opacity: 0 }}
@@ -311,7 +402,7 @@ const PyqsPage = () => {
                   </div>
                   
                   <div className="mt-4 flex flex-wrap gap-2">
-                    {pyq.tags.map((tag, i) => (
+                    {pyq.tags && pyq.tags.map((tag, i) => (
                       <span 
                         key={i}
                         className="text-xs px-2 py-0.5 bg-white/5 text-gray-400 rounded"
@@ -325,7 +416,7 @@ const PyqsPage = () => {
                 <div className="border-t border-white/5 p-4 flex justify-between items-center">
                   <div className="flex items-center text-gray-400 text-sm">
                     <FiClock className="mr-1" />
-                    <span>PDF • 2.3 MB</span>
+                    <span>PDF • {pyq.fileSize || '2.3 MB'}</span>
                   </div>
                   
                   <button 
