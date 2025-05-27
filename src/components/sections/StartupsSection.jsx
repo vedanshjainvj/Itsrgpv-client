@@ -1,8 +1,52 @@
-import React from 'react';
+import React ,{useState, useEffect} from 'react';
 import { motion } from 'framer-motion';
 import { STARTUPS } from '../../utils/constants';
+import startupsApi from '../../services/api/startup';
 
 const StartupsSection = () => {
+
+  const [startups, setStartups] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchStartups = async () => {
+      try {
+        setIsLoading(true);
+        const response = await startupsApi.getStartups();
+        console.log('Fetched Startups:', response);
+        
+        if (response && response.startups) {
+          setStartups(response.startups);
+        } else {
+          // Fallback to static data if API response format is unexpected
+          console.log('Using static startups data');
+          setStartups(STARTUPS);
+        }
+      } catch (error) {
+        console.error('Error fetching startups:', error);
+        setError('Failed to load startup data');
+        // Fallback to static data on error
+        setStartups(STARTUPS);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchStartups();
+  }, []);
+
+   if (isLoading) {
+    return (
+      <section className="py-20 bg-black">
+        <div className="max-w-7xl mx-auto px-4 text-center">
+          <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-gray-300 mt-4">Loading startups...</p>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-20 bg-black relative overflow-hidden">
       <div className="absolute inset-0">
@@ -20,7 +64,7 @@ const StartupsSection = () => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-          {STARTUPS.map((startup, index) => (
+          {startups.map((startup, index) => (
             <motion.div
               key={startup.id}
               initial={{ opacity: 0, y: 30 }}
