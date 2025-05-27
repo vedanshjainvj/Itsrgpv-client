@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiDownload, FiFilter, FiX, FiSearch, FiStar, FiUser, FiBook, FiTag, FiFileText, FiEye, FiThumbsUp } from 'react-icons/fi';
 import { NOTES_DATA } from '../utils/constants';
+import notesApi from '../services/api/notes';
+
 
 const BRANCHES = ['CSE', 'ECE', 'ME', 'CE', 'EE'];
 
@@ -14,16 +16,90 @@ const ToppersNotesPage = () => {
     semesters: []
   });
   const [showFilters, setShowFilters] = useState(false);
-  const [filteredNotes, setFilteredNotes] = useState(NOTES_DATA);
+  const [notes, setNotes] = useState([]);
+  const [filteredNotes, setFilteredNotes] = useState([]);
   const [selectedNote, setSelectedNote] = useState(null);
   const [downloadingId, setDownloadingId] = useState(null);
   const [sortBy, setSortBy] = useState('rating'); // 'rating', 'downloads', 'date', 'likes'
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch notes from API
+  useEffect(() => {
+    const fetchNotes = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        // Convert frontend filter format to backend format
+        const apiFilters = {};
+        
+        if (activeFilters.branches.length > 0) {
+          apiFilters.branch = activeFilters.branches[0]; // Use first selected branch
+        }
+        
+        if (activeFilters.semesters.length > 0) {
+          apiFilters.semester = activeFilters.semesters[0]; // Use first selected semester
+        }
+        
+        let response;
+        
+        // If search query exists, use search endpoint
+        if (searchQuery.trim()) {
+          response = await notesApi.searchNotes(searchQuery);
+        } else {
+          // Otherwise use filter endpoint
+          response = await notesApi.getNotes(apiFilters);
+        }
+
+        if (response && response.notes) {
+          setNotes(response.notes);
+        } else {
+          // Fallback to static data
+          console.log('No data from API, using static data');
+          setNotes(NOTES_DATA);
+        }
+      } catch (err) {
+        console.error('Error fetching notes:', err);
+        setError('Failed to load notes. Please try again later.');
+        // Use static data on error
+        setNotes(NOTES_DATA);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchNotes();
+  }, [searchQuery, activeFilters]);
 
   useEffect(() => {
-    // Filter notes based on search query and active filters
-    let filtered = NOTES_DATA.filter(note => {
-      // Search query filter
-      const searchMatch = searchQuery === '' || 
+    // Filter and sort notes
+    let filtered = notes;
+    
+    // Skip filtering if API already filtered
+    if (searchQuery.trim() === '' && activeFilters.branches.length === 0 && activeFilters.semesters.length === 0) {
+      // Sort filtered notes
+      filtered = notes.sort((a, b) => {
+        if (sortBy === 'rating') {
+          return parseFloat(b.rating) - parseFloat(a.rating);
+        } else if (sortBy === 'downloads') {
+          return b.downloads - a.downloads;
+        } else if (sortBy === 'date') {
+          return new Date(b.dateAdded) - new Date(a.dateAdded);
+        } else if (sortBy === 'likes') {
+          return b.likes - a.likes;
+        }
+        return 0;
+      });
+      
+      setFilteredNotes(filtered);
+      return;
+    }
+
+    // Apply client-side filtering for more responsive UI
+    filtered = notes.filter(note => {
+      // Search query filter (only if not already filtered by API)
+      const searchMatch = searchQuery.trim() === '' || 
         note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         note.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
         note.subjectCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -42,7 +118,7 @@ const ToppersNotesPage = () => {
     // Sort filtered notes
     filtered = filtered.sort((a, b) => {
       if (sortBy === 'rating') {
-        return b.rating - a.rating;
+        return parseFloat(b.rating) - parseFloat(a.rating);
       } else if (sortBy === 'downloads') {
         return b.downloads - a.downloads;
       } else if (sortBy === 'date') {
@@ -54,7 +130,8 @@ const ToppersNotesPage = () => {
     });
     
     setFilteredNotes(filtered);
-  }, [searchQuery, activeFilters, sortBy]);
+  }, [notes, searchQuery, activeFilters, sortBy]);
+
 
   const handleFilterToggle = (filterType, value) => {
     setActiveFilters(prev => {
@@ -82,23 +159,52 @@ const ToppersNotesPage = () => {
     setSearchQuery('');
   };
 
-  const handleDownload = (id) => {
+  const handleDownload = async (id) => {
     setDownloadingId(id);
     
-    // Simulate download delay
-    setTimeout(() => {
+    try {
+      await notesApi.downloadNote(id);
+      console.log(`Downloaded Note ID: ${id}`);
+      // Register download (in a production app)
+      // await notesApi.incrementDownloads(id);
+      setTimeout(() => {
+        setDownloadingId(null);
+      }, 1500);
+    } catch (err) {
+      console.error('Error downloading note:', err);
       setDownloadingId(null);
-      // In a real app, you would trigger the actual download here
-      console.log(`Downloading Notes ID: ${id}`);
-    }, 1500);
+      alert('Failed to download the note. Please try again.');
+    }
   };
 
-  const viewNoteDetails = (note) => {
+  const viewNoteDetails = async (note) => {
     setSelectedNote(note);
+    
+    try {
+      // Optionally register view in backend
+      // await notesApi.viewNote(note.id);
+    } catch (err) {
+      console.error('Error registering note view:', err);
+    }
   };
 
   const closeNoteDetails = () => {
     setSelectedNote(null);
+  };
+
+  const handleLikeNote = async (id) => {
+    try {
+      // Add like functionality
+      // const updatedNote = await notesApi.likeNote(id);
+      // Update the note in the local state
+      setNotes(prevNotes => 
+        prevNotes.map(note => 
+          note.id === id ? { ...note, likes: note.likes + 1 } : note
+        )
+      );
+    } catch (err) {
+      console.error('Error liking note:', err);
+    }
   };
 
   // Get the count of active filters
@@ -139,6 +245,27 @@ const ToppersNotesPage = () => {
           </motion.p>
         </div>
         
+        {/* Loading indicator */}
+        {isLoading && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-black/80 p-8 rounded-xl border border-white/10 flex flex-col items-center">
+              <div className="w-12 h-12 border-4 border-pink-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+              <p className="text-white">Loading notes...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Error message */}
+        {error && !isLoading && (
+          <motion.div 
+            className="bg-red-900/20 border border-red-500/50 rounded-lg p-4 mb-6"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <p className="text-red-300">{error}</p>
+          </motion.div>
+        )}
+
         <motion.div 
           className="flex flex-col md:flex-row gap-4 mb-8"
           initial={{ opacity: 0, y: 20 }}
@@ -254,7 +381,7 @@ const ToppersNotesPage = () => {
           )}
         </AnimatePresence>
         
-        {filteredNotes.length === 0 ? (
+        {!isLoading && filteredNotes.length === 0 ? (
           <motion.div 
             className="text-center py-16"
             initial={{ opacity: 0 }}
