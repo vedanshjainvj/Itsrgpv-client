@@ -1,10 +1,38 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect ,handleNext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CLUBS } from '../../utils/constants';
+import clubsApi from '../../services/api/clubs';
 
 const ClubsCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(0);
+  const [clubs, setClubs] = useState(CLUBS);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch clubs data
+  useEffect(() => {
+    const fetchClubs = async () => {
+      try {
+        setIsLoading(true);
+        const response = await clubsApi.getClubs();
+        if (response && response.clubs && response.clubs.length > 0) {
+          setClubs(response.clubs);
+        } else {
+          // Fallback to static data if API returns empty
+          console.log('No data from API, using static data');
+          setClubs(CLUBS);
+        }
+      } catch (err) {
+        console.error('Error fetching clubs:', err);
+        // Use static data on error
+        setClubs(CLUBS);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchClubs();
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -12,16 +40,16 @@ const ClubsCarousel = () => {
     }, 5000);
     
     return () => clearInterval(interval);
-  }, [currentIndex]);
+  }, [currentIndex , clubs.length]);
 
   const handleNext = () => {
     setDirection(1);
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % CLUBS.length);
+    setCurrentIndex((prevIndex) => (prevIndex + 1) % clubs.length);
   };
 
   const handlePrev = () => {
     setDirection(-1);
-    setCurrentIndex((prevIndex) => (prevIndex - 1 + CLUBS.length) % CLUBS.length);
+    setCurrentIndex((prevIndex) => (prevIndex - 1 + clubs.length) % clubs.length);
   };
 
   const variants = {
@@ -39,7 +67,18 @@ const ClubsCarousel = () => {
     }),
   };
 
-  const club = CLUBS[currentIndex];
+  if (isLoading) {
+    return (
+      <section className="py-20 bg-black">
+        <div className="max-w-7xl mx-auto px-4 text-center">
+          <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-gray-300">Loading clubs...</p>
+        </div>
+      </section>
+    );
+  }
+  
+  const club = clubs[currentIndex];
 
   return (
     <section className="py-20 bg-black relative overflow-hidden">
