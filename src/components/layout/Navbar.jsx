@@ -273,26 +273,28 @@ const Navbar = () => {
                           variants={menuItemVariants}
                           className="pt-8 space-y-3"
                         >
-                          <Button 
-                            variant="outline" 
-                            size="md" 
-                            fullWidth
-                            rounded
-                            onClick={() =>{ 
-                              openAuthModal('login')
-                            }}
-                          >
-                            Login
-                          </Button>
-                          <Button 
-                            variant="pink" 
-                            size="md" 
-                            fullWidth
-                            rounded
-                            onClick={() => openAuthModal('signup')}
-                          >
-                            Sign Up
-                          </Button>
+                        <SignInButton mode="modal">
+  <Button 
+    variant="outline" 
+    size="md" 
+    fullWidth
+    rounded
+  >
+    Login
+  </Button>
+</SignInButton>
+
+<SignUpButton mode="modal">
+  <Button 
+    variant="pink" 
+    size="md" 
+    fullWidth
+    rounded
+  >
+    Sign Up
+  </Button>
+</SignUpButton>
+
                         </motion.div>
                       )}
                     </div>
