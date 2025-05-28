@@ -4,7 +4,7 @@ import { FiEdit3, FiCamera, FiBookmark, FiCalendar, FiEdit, FiHeart, FiMessageSq
 import { checkUseAuth } from '../context/AuthContext';
 
 const ProfilePage = () => {
-  const { user } = checkUseAuth();
+  const { user ,userData} = checkUseAuth();
   const [activeTab, setActiveTab] = useState('posts');
 
   // Animation variants
@@ -64,23 +64,41 @@ const ProfilePage = () => {
   ];
 
   // Mock data for user profile
+  // const mockUser = {
+  //   ...user,
+  //   firstName: userData?.firstName || 'John',
+  //   lastName: userData?.lastName || 'Doe',
+  //   email: userData?.email || 'john.doe@example.com',
+  //   branch: 'Computer Science',
+  //   year: '3rd Year',
+  //   bio: 'Passionate student interested in web development, machine learning, and creating innovative solutions.',
+  //   profilePic: user?.profilePic || '/assets/default-avatar.png',
+  //   coverPic: '/assets/profile-cover.jpg',
+  //   joinDate: 'June 2022',
+  //   posts: 24,
+  //   demands: 5,
+  //   comments: 42,
+  //   followers: 128,
+  //   following: 87
+  // };
+
   const mockUser = {
-    ...user,
-    firstName: user?.firstName || 'John',
-    lastName: user?.lastName || 'Doe',
-    email: user?.email || 'john.doe@example.com',
-    branch: 'Computer Science',
-    year: '3rd Year',
-    bio: 'Passionate student interested in web development, machine learning, and creating innovative solutions.',
-    profilePic: user?.profilePic || '/assets/default-avatar.png',
-    coverPic: '/assets/profile-cover.jpg',
-    joinDate: 'June 2022',
-    posts: 24,
-    demands: 5,
-    comments: 42,
-    followers: 128,
-    following: 87
-  };
+  firstName: userData?.firstName || 'John',
+  lastName: userData?.lastName || 'Doe',
+  email: userData?.email || 'john.doe@example.com',
+  branch: userData?.branch || 'Computer Science',
+  year: userData?.year || '3rd Year',
+  bio: userData?.aboutUs || 'Passionate student interested in web development, machine learning, and creating innovative solutions.',
+  profilePic: userData?.profilePic || '/assets/default-avatar.png',
+  coverPic: userData?.coverPic || '/assets/profile-cover.jpg',
+  joinDate: userData?.createdAt || 'June 2022',
+  posts: userData?.posts ?? 24,
+  demands: userData?.demands ?? 5,
+  comments: userData?.comments ?? 42,
+  followers: userData?.followers ?? 128,
+  following: userData?.following ?? 87
+};
+
 
   // Mock posts data
   const mockPosts = [

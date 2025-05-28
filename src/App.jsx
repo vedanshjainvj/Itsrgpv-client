@@ -1,4 +1,4 @@
-import React from 'react';
+import{ React ,useState,useEffect}from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Layout from './components/layout/Layout';
 import Home from './pages/Home';
@@ -20,7 +20,9 @@ import FestsPage from './pages/FestsPage';
 import FestDetailPage from './pages/FestDetailPage';
 import './styles/app.css';
 
+
 const App = () => {
+  
   return (
     <AuthProvider>
       <BrowserRouter>

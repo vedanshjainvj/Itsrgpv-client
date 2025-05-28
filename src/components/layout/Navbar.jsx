@@ -17,11 +17,10 @@ import {
 } from "@clerk/clerk-react";
 const Navbar = () => {
   const { isMenuOpen, toggleMenu, closeMenu, setActiveRoute } = useNavStore();
-  const { isAuthenticated, user } = checkUseAuth();
+  const { isAuthenticated, user ,logout,profileStatus} = checkUseAuth();
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [authModalMode, setAuthModalMode] = useState('login');
 
   useEffect(() => {
     setActiveRoute(location.pathname);
@@ -100,11 +99,17 @@ const Navbar = () => {
     }
   };
 
-  const openAuthModal = (mode) => {
-    setAuthModalMode(mode);
-    setIsAuthModalOpen(true);
-    closeMenu();
+  const openAuthModal = () => {
+    console.log(profileStatus)
+    if(profileStatus==false){
+      setIsAuthModalOpen(true);
+      closeMenu();
+    }
   };
+ 
+  useEffect(()=>{
+  openAuthModal();
+  },[profileStatus])
 
   return (
     <>
@@ -165,30 +170,8 @@ const Navbar = () => {
                 {isAuthenticated ? (
                   <ProfileDropdown user={user} />
                 ) : (
-      //             <div className="flex items-center space-x-3">
-      //               {/* <Button 
-      //                 variant="outline" 
-      //                 size="sm" 
-      //                 rounded
-      //                 onClick={() => openAuthModal('login')}
-      //               >
-      //                 Login
-      //               </Button> */}
-      //                    <SignedIn>
-      //   <UserButton />
-      // </SignedIn>
-      //               <Button 
-      //                 variant="pink" 
-      //                 size="sm" 
-      //                 rounded
-      //                 onClick={() => openAuthModal('signup')}
-      //               >
-      //                 Sign Up
-      //               </Button>
-      //             </div>
         <div className="flex items-center space-x-3">
       
-      {/* Show when user is logged in */}
       <SignedIn>
         <UserButton afterSignOutUrl="/" />
       </SignedIn>
@@ -344,8 +327,11 @@ const Navbar = () => {
       {/* Auth Modal */}
       <AuthModal 
         isOpen={isAuthModalOpen} 
-        onClose={() => setIsAuthModalOpen(false)}
-        initialMode={authModalMode}
+        onComplete={(()=>{setIsAuthModalOpen(false)})}
+        onClose={() => {
+          logout()
+          setIsAuthModalOpen(false)
+        }}
       />
     </>
   );

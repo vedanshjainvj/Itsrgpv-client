@@ -4,13 +4,16 @@ import { FiUser, FiPhone, FiCalendar, FiArrowLeft, FiX, FiPlus } from 'react-ico
 
 const SignupStep3 = ({ onNext, onBack, data }) => {
   const [formData, setFormData] = useState({
+    firstName: data.firstName || '',
     lastName: data.lastName || '',
     branch: data.branch || '',
     year: data.year || '',
     gender: data.gender || '',
     dob: data.dob || '',
     semester: data.semester || '',
-    contact: data.contact || '',
+    contactNumber: data.contactNumber || '',
+    enrollmentNumber: data.enrollmentNumber || '',
+    aboutUs: data.aboutUs || '',
     socialLinks: data.socialLinks || {
       instagram: '',
       linkedin: '',
@@ -40,6 +43,9 @@ const SignupStep3 = ({ onNext, onBack, data }) => {
   const validateForm = () => {
     const newErrors = {};
     
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = 'First name is required';
+    }
     if (!formData.lastName.trim()) {
       newErrors.lastName = 'Last name is required';
     }
@@ -59,15 +65,21 @@ const SignupStep3 = ({ onNext, onBack, data }) => {
     if (!formData.gender) {
       newErrors.gender = 'Gender is required';
     }
+    if (!formData.enrollmentNumber) {
+      newErrors.enrollmentNumber = 'Enrollment Number is required';
+    }
     
     if (!formData.dob) {
       newErrors.dob = 'Date of birth is required';
     }
+  if (!formData.aboutUs || formData.aboutUs.trim().split(/\s+/).length < 10) {
+  newErrors.aboutUs = 'About Us is required and must be at least 10 words long';
+}
     
-    if (!formData.contact.trim()) {
-      newErrors.contact = 'Contact number is required';
-    } else if (!/^\d{10}$/.test(formData.contact)) {
-      newErrors.contact = 'Contact number must be 10 digits';
+    if (!formData.contactNumber.trim()) {
+      newErrors.contactNumber = 'Contact number is required';
+    } else if (!/^\d{10}$/.test(formData.contactNumber)) {
+      newErrors.contactNumber = 'Contact number must be 10 digits';
     }
     
     setErrors(newErrors);
@@ -145,6 +157,31 @@ const SignupStep3 = ({ onNext, onBack, data }) => {
       className="max-h-[60vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900"
     >
       <div className="space-y-4">
+        {/* Last Name */}
+        <div>
+          <label className="block text-gray-300 text-sm font-medium mb-1">
+           First Name
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <FiUser className="text-gray-500" />
+            </div>
+            <input
+              type="text"
+              name="firstName"
+              value={formData.firstName}
+              onChange={handleChange}
+              className={`bg-gray-800 text-white w-full py-2 pl-10 pr-3 rounded-lg border ${
+                errors.firstName ? 'border-red-500' : 'border-gray-700'
+              } focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
+              placeholder="Enter your last name"
+            />
+          </div>
+          {errors.firstName && (
+            <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
+          )}
+        </div>
+        
         {/* Last Name */}
         <div>
           <label className="block text-gray-300 text-sm font-medium mb-1">
@@ -296,6 +333,28 @@ const SignupStep3 = ({ onNext, onBack, data }) => {
           </div>
         </div>
         
+        {/* enrollmentNumber */}
+        <div>
+          <label className="block text-gray-300 text-sm font-medium mb-1">
+            Enrollment Number
+          </label>
+          <div className="relative">
+       
+            <input
+              type="text"
+              name="enrollmentNumber"
+              value={formData.enrollmentNumber}
+              onChange={handleChange}
+              className={`bg-gray-800 text-white w-full py-2 px-3 rounded-lg border ${
+                errors.enrollmentNumber ? 'border-red-500' : 'border-gray-700'
+              } focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
+              placeholder="Enter your phone number"
+            />
+          </div>
+          {errors.enrollmentNumber && (
+            <p className="text-red-500 text-xs mt-1">{errors.enrollmentNumber}</p>
+          )}
+        </div>
         {/* Contact */}
         <div>
           <label className="block text-gray-300 text-sm font-medium mb-1">
@@ -307,17 +366,17 @@ const SignupStep3 = ({ onNext, onBack, data }) => {
             </div>
             <input
               type="tel"
-              name="contact"
-              value={formData.contact}
+              name="contactNumber"
+              value={formData.contactNumber}
               onChange={handleChange}
               className={`bg-gray-800 text-white w-full py-2 pl-10 pr-3 rounded-lg border ${
-                errors.contact ? 'border-red-500' : 'border-gray-700'
+                errors.contactNumber ? 'border-red-500' : 'border-gray-700'
               } focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
               placeholder="Enter your phone number"
             />
           </div>
-          {errors.contact && (
-            <p className="text-red-500 text-xs mt-1">{errors.contact}</p>
+          {errors.contactNumber && (
+            <p className="text-red-500 text-xs mt-1">{errors.contactNumber}</p>
           )}
         </div>
         
@@ -417,17 +476,42 @@ const SignupStep3 = ({ onNext, onBack, data }) => {
             </div>
           )}
         </div>
+
+             {/* About Us */}
+        <div>
+          <label className="block text-gray-300 text-sm font-medium mb-1">
+            About Us
+          </label>
+          <div className="relative">
+            {/* <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <FiPhone className="text-gray-500" />
+            </div> */}
+            <textarea
+              type="tel"
+              name="aboutUs"
+              value={formData.aboutUs}
+              onChange={handleChange}
+              className={`bg-gray-800 text-white w-full py-2  px-2 rounded-lg border ${
+                errors.aboutUs ? 'border-red-500' : 'border-gray-700'
+              } focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
+              placeholder="Enter about us"
+            />
+          </div>
+          {errors.aboutUs && (
+            <p className="text-red-500 text-xs mt-1">{errors.aboutUs}</p>
+          )}
+        </div>
       </div>
       
       <div className="mt-6 flex space-x-3">
-        <button
+        {/* <button
           type="button"
           onClick={onBack}
           className="flex-1 py-2 px-4 bg-gray-800 text-white font-medium rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 focus:ring-offset-gray-900 flex items-center justify-center"
         >
           <FiArrowLeft className="mr-2" />
           Back
-        </button>
+        </button> */}
         
         <button
           type="submit"

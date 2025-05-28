@@ -1,27 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState ,useEffect} from 'react';
+import { useUser } from '@clerk/clerk-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX } from 'react-icons/fi';
 import SignupStep1 from './SignupStep1';
 import SignupStep2 from './SignupStep2';
 import SignupStep3 from './SignupStep3';
 import SignupStep4 from './SignupStep4';
-import LoginForm from './LoginForm';
+// import LoginForm from './LoginForm';
 import { checkUseAuth } from '../../context/AuthContext';
+import { createNewStudentAccount } from '../../services/api/auth';
 
-const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
-  const [mode, setMode] = useState(initialMode);
+const AuthModal = ({ isOpen, onClose,onComplete }) => {
+  const { isSignedIn, isLoaded, user } = useUser();
   const [signupStep, setSignupStep] = useState(1);
   const [formData, setFormData] = useState({
+    userId:'',
+    enrollmentNumber:'',
     firstName: '',
     email: '',
-    password: '',
     lastName: '',
     branch: '',
     year: '',
     semester: '',
     gender: '',
     dob: '',
-    contact: '',
+    contactNumber: '',
     socialLinks: {
       instagram: '',
       linkedin: '',
@@ -29,79 +32,55 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
       twitter: ''
     },
     skills: [],
-    profilePic: null
+    profilePic: null,
+    aboutUs: ""
   });
-  
-  const { login } = checkUseAuth();
 
-  const handleModeChange = (newMode) => {
-    setMode(newMode);
-    if (newMode === 'signup') {
-      setSignupStep(1);
-    }
+  const { setProfileStatus,userId} = checkUseAuth();
+
+  const handleNextStep = async(data) => {
+  const updated = { 
+    ...formData,   
+    ...data,     
+    userId: userId 
   };
-
-  const handleNextStep = (data) => {
-    setFormData(prev => ({ ...prev, ...data }));
-    setSignupStep(prev => prev + 1);
+  setFormData(updated); 
+  console.log(updated);
+  try {
+    const response = await createNewStudentAccount(updated);
+    console.log(response);
+    onComplete();
+  } catch (error) {
+    console.log(error);
+    alert(error);
+  }
   };
 
   const handlePrevStep = () => {
     setSignupStep(prev => prev - 1);
   };
 
-  const handleSignupComplete = (finalData) => {
-    const completeData = { ...formData, ...finalData };
-    // In a real app, we would send this data to the backend
-    console.log('Signup complete with data:', completeData);
-    
-    // Simulate successful registration
-    login({
-      id: Math.random().toString(36).substr(2, 9),
-      firstName: completeData.firstName,
-      lastName: completeData.lastName,
-      email: completeData.email,
-      profilePic: completeData.profilePic || '/default-avatar.png',
-      skills: completeData.skills,
-      branch: completeData.branch,
-      year: completeData.year
-    });
-    
-    // Close the modal after successful signup
-    setTimeout(() => {
-      onClose();
-    }, 2000);
-  };
 
-  const handleLogin = (credentials) => {
-    // In a real app, we would validate credentials with the backend
-    console.log('Login attempt with:', credentials);
-    
-    // Simulate successful login
-    login({
-      id: Math.random().toString(36).substr(2, 9),
-      firstName: 'Sample',
-      lastName: 'User',
-      email: credentials.email,
-      profilePic: '/default-avatar.png',
-      skills: ['JavaScript', 'React'],
-      branch: 'Computer Science',
-      year: '3rd Year'
-    });
-    
-    // Close the modal after successful login
-    onClose();
-  };
+useEffect(() => {
+  console.log(user?.lastName)
+  if (isLoaded && isSignedIn && user) {
+    setFormData((prev) => ({
+      ...prev,
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      email: user.primaryEmailAddress?.emailAddress || '',
+      contactNumber: user.primaryPhoneNumber?.phoneNumber || '',
+      profilePic: user.imageUrl || null
+    }));
+  }
+}, [isLoaded, isSignedIn, user]);
+
 
   const renderStepContent = () => {
     switch (signupStep) {
       case 1:
-        return <SignupStep1 onNext={handleNextStep} data={formData} />;
+        return <SignupStep3 initialData={formData} onNext={handleNextStep}  data={formData} />;
       case 2:
-        return <SignupStep2 onNext={handleNextStep} onBack={handlePrevStep} />;
-      case 3:
-        return <SignupStep3 onNext={handleNextStep} onBack={handlePrevStep} data={formData} />;
-      case 4:
         return <SignupStep4 onBack={handlePrevStep} />;
       default:
         return null;
@@ -158,48 +137,18 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="relative">
-                {/* Close button */}
                 <button 
                   onClick={onClose}
                   className="absolute top-4 right-4 text-gray-400 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors"
                 >
                   <FiX size={20} />
                 </button>
-                
-                {/* Tabs for switching between login and signup */}
-                <div className="flex border-b border-gray-800">
-                  <button
-                    className={`flex-1 py-4 text-center font-medium transition-colors ${
-                      mode === 'login' 
-                        ? 'text-white border-b-2 border-purple-500' 
-                        : 'text-gray-400 hover:text-gray-300'
-                    }`}
-                    onClick={() => handleModeChange('login')}
-                  >
-                    Login
-                  </button>
-                  <button
-                    className={`flex-1 py-4 text-center font-medium transition-colors ${
-                      mode === 'signup' 
-                        ? 'text-white border-b-2 border-purple-500' 
-                        : 'text-gray-400 hover:text-gray-300'
-                    }`}
-                    onClick={() => handleModeChange('signup')}
-                  >
-                    Sign Up
-                  </button>
-                </div>
-                
-                {/* Modal content */}
                 <div className="p-6">
-                  {mode === 'login' ? (
-                    <LoginForm onLogin={handleLogin} />
-                  ) : (
                     <div>
                       <div className="flex justify-between items-center mb-6">
                         <h2 className="text-xl font-bold text-white">Create Account</h2>
                         <div className="flex items-center">
-                          {[1, 2, 3, 4].map((step) => (
+                          {[1, 2].map((step) => (
                             <div
                               key={step}
                               className={`w-2.5 h-2.5 rounded-full mx-1 ${
@@ -215,7 +164,6 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
                       </div>
                       {renderStepContent()}
                     </div>
-                  )}
                 </div>
               </div>
             </motion.div>

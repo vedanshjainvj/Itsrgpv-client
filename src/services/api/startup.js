@@ -34,12 +34,8 @@ const startupsApi = {
    */
   getStartups: async () => {
     try {
-      console.log("Fetching startups from API...", API_BASE_URL);
       const response = await axios.get(`${API_BASE_URL}/startup/get-startup`);
-      console.log(
-        "API Response for startup:",
-        JSON.stringify(response.data.data, null, 2)
-      );
+
       if (response.data?.data) {
         const mappedStartups = response.data.data.map(mapStartup);
         return {

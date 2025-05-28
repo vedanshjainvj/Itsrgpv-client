@@ -1,37 +1,55 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import { useAuth, useUser } from "@clerk/clerk-react";
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useAuth, useUser, useClerk } from '@clerk/clerk-react';
+import { checkUserProfile } from '../services/api/auth';
+import AuthModal from '../components/auth/AuthModal';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(true);
-  const [loading, setLoading] = useState(true);
-  
-  useEffect(() => {
-    // Check if user is stored in localStorage
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
-  }, []);
-
-  const login = (userData) => {
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
-  };
+  const { isSignedIn, getToken, userId } = useAuth();  
+  const [profileStatus, setProfileStatus] = useState(null); // null = not yet checked
+  const [userData,setUserData] = useState();
+  const { user, isLoaded } = useUser();              
+  const { signOut } = useClerk();                    
 
   const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
+    console.log("logout called");
+    localStorage.removeItem('user'); 
+    signOut();                        
   };
+  
+  const checkProfile = async () => {
+    try {
+      const userProfile = await checkUserProfile(userId); // no need for itsId
+      setUserData(userProfile?.data?.data);
+      setProfileStatus(true);
+    } catch (error) {
+      console.log(error);
+      if (error?.response?.status === 404) {
+        setProfileStatus(false); // profile doesn't exist
+      } else {
+        alert(error?.message || "Unknown error");
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (userId) {
+      checkProfile();
+    }
+  }, [userId]);
 
   const value = {
     user,
-    loading,
-    login,
+    isAuthenticated: isSignedIn,
+    loading: !isLoaded,
+    userId,
+    login: isSignedIn,
+    profileStatus,
+    setProfileStatus,
     logout,
-    isAuthenticated: !!user
+    userData,
+    getToken,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -40,41 +58,7 @@ export const AuthProvider = ({ children }) => {
 export const checkUseAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('checkUseAuth must be used within an AuthProvider');
+    throw new Error('useAuthContext must be used within an AuthProvider');
   }
   return context;
 };
-
-// import React, { createContext, useContext } from 'react';
-// import { useAuth, useUser } from '@clerk/clerk-react';
-
-// const AuthContext = createContext(null);
-
-// export const AuthProvider = ({ children }) => {
-//   const { isSignedIn, getToken, userId } = useAuth();
-//   const { user, isLoaded } = useUser();
-//   const logout = () => {
-//     // setUser(null);
-//     console.log("logout call")
-//     localStorage.removeItem('user');
-//   };
-//   const value = {
-//     user,
-//     isAuthenticated: isSignedIn,
-//     loading: !isLoaded,
-//     userId,
-//     login:isSignedIn,
-//     logout,
-//     getToken, // useful for backend API calls
-//   };
-
-//   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-// };
-
-// export const checkUseAuth = () => {
-//   const context = useContext(AuthContext);
-//   if (!context) {
-//     throw new Error('useAuthContext must be used within an AuthProvider');
-//   }
-//   return context;
-// };

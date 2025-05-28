@@ -38,7 +38,6 @@ const achievementsApi = {
   getAchievements: async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/achievement/get-achievements`);
-      console.log('API Response:', JSON.stringify(response.data, null, 2));
       
       if (response.data && response.data.data) {
         const mappedAchievements = response.data.data.map(mapAchievement);
@@ -55,7 +54,6 @@ const achievementsApi = {
         throw new Error('Invalid API response format');
       }
     } catch (error) {
-      console.error('Error fetching achievements:', error);
       throw error;
     }
   },
@@ -70,7 +68,6 @@ const achievementsApi = {
         throw new Error('Invalid API response format');
       }
     } catch (error) {
-      console.error('Error fetching achievement by ID:', error);
       throw error;
     }
   }
