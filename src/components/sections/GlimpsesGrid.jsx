@@ -82,7 +82,7 @@ const GlimpsesGrid = () => {
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   onError={(e) => {
                     e.target.onerror = null;
-                    e.target.src = "https://via.placeholder.com/400x300/111827/6d28d9?text=RGPV";
+                    e.target.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Cape_may.jpg/500px-Cape_may.jpg";
                   }}
                 />
                 

@@ -39,7 +39,7 @@ const CompactReelsSection = () => {
       hashtags: ["Cultural", "CollegeLife", "Fest"],
       source: shankhvideo,
       thumbnail: coverimg2,
-      fallbackThumbnail: "https://via.placeholder.com/1280x720/6d28d9/ffffff?text=Freshers+Party"
+      fallbackThumbnail: "https://www.google.com/url?sa=i&url=https%3A%2F%2Fen.wikipedia.org%2Fwiki%2FSunset&psig=AOvVaw3fMdmIZj3VdFCIhCd-0Kkh&ust=1748528272740000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCIj-tcitxo0DFQAAAAAdAAAAABAE"
     },
     {
       id: 2,
@@ -48,7 +48,7 @@ const CompactReelsSection = () => {
       hashtags: ["CivilDept", "StudentTalent", "Performances"],
       source: vijayvideo,
       thumbnail: coverimg1,
-      fallbackThumbnail: "https://via.placeholder.com/1280x720/be185d/ffffff?text=Campus+Festival"
+      fallbackThumbnail: "https://www.google.com/url?sa=i&url=https%3A%2F%2Fen.wikipedia.org%2Fwiki%2FSunset&psig=AOvVaw3fMdmIZj3VdFCIhCd-0Kkh&ust=1748528272740000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCIj-tcitxo0DFQAAAAAdAAAAABAE"
     },
     {
       id: 3,
@@ -57,7 +57,7 @@ const CompactReelsSection = () => {
       hashtags: ["Mahasangram", "CollegeAthletics"],
       source: mahavideo,
       thumbnail: coverimg3,
-      fallbackThumbnail: "https://via.placeholder.com/1280x720/0369a1/ffffff?text=Sports+Day"
+      fallbackThumbnail: "https://www.google.com/url?sa=i&url=https%3A%2F%2Fen.wikipedia.org%2Fwiki%2FSunset&psig=AOvVaw3fMdmIZj3VdFCIhCd-0Kkh&ust=1748528272740000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCIj-tcitxo0DFQAAAAAdAAAAABAE"
     }
   ];
 

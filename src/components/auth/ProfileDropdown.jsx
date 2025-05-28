@@ -2,12 +2,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiUser, FiMessageSquare, FiPlusCircle, FiSettings, FiLogOut, FiChevronDown } from 'react-icons/fi';
-import { useAuth } from '../../context/AuthContext';
+import { checkUseAuth } from '../../context/AuthContext';
 
 const ProfileDropdown = ({ user, isMobile = false }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
-  const { logout } = useAuth();
+  const { logout } = checkUseAuth();
   const navigate = useNavigate();
 
   // Toggle dropdown visibility

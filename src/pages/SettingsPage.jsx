@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FiUser, FiLock, FiBell, FiGlobe, FiSave, FiEdit2, FiUpload, FiCheck, FiX, FiEye, FiEyeOff } from 'react-icons/fi';
-import { useAuth } from '../context/AuthContext';
+import { checkUseAuth } from '../context/AuthContext';
 
 const SettingsPage = () => {
-  const { user } = useAuth();
+  const { user } = checkUseAuth();
   const [activeTab, setActiveTab] = useState('profile');
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({

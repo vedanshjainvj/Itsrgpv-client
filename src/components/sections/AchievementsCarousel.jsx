@@ -187,7 +187,7 @@ const AchievementsCarousel = () => {
                         className="absolute inset-0 w-full h-full object-cover"
                         onError={(e) => {
                           e.target.onerror = null;
-                          e.target.src = "https://via.placeholder.com/400x300/111827/6d28d9?text=Student+Achievement";
+                          e.target.src = "https://www.google.com/url?sa=i&url=https%3A%2F%2Fen.wikipedia.org%2Fwiki%2FSunset&psig=AOvVaw3fMdmIZj3VdFCIhCd-0Kkh&ust=1748528272740000&source=images&cd=vfe&opi=89978449&ved=0CBQQjRxqFwoTCIj-tcitxo0DFQAAAAAdAAAAABAE";
                         }}
                       />
                     </div>

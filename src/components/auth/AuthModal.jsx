@@ -6,7 +6,7 @@ import SignupStep2 from './SignupStep2';
 import SignupStep3 from './SignupStep3';
 import SignupStep4 from './SignupStep4';
 import LoginForm from './LoginForm';
-import { useAuth } from '../../context/AuthContext';
+import { checkUseAuth } from '../../context/AuthContext';
 
 const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
   const [mode, setMode] = useState(initialMode);
@@ -32,7 +32,7 @@ const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
     profilePic: null
   });
   
-  const { login } = useAuth();
+  const { login } = checkUseAuth();
 
   const handleModeChange = (newMode) => {
     setMode(newMode);

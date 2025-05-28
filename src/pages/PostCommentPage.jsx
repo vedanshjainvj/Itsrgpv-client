@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FiSend, FiImage, FiLink, FiSmile, FiX, FiTag, FiChevronDown, FiCheck } from 'react-icons/fi';
-import { useAuth } from '../context/AuthContext';
+import { checkUseAuth } from '../context/AuthContext';
 
 const PostCommentPage = () => {
-  const { user } = useAuth();
+  const { user } = checkUseAuth();
   const [content, setContent] = useState('');
   const [title, setTitle] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('general');

@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FiUser, FiLogOut, FiSettings, FiMessageSquare, FiPlusCircle, FiChevronDown } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { checkUseAuth } from '../../context/AuthContext';
 import AuthModal from './AuthModal';
 
 const AuthButton = () => {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout } = checkUseAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('login');
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);

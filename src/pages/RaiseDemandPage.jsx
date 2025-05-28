@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FiSend, FiImage, FiFile, FiX, FiInfo, FiChevronDown, FiCheck, FiAlertCircle } from 'react-icons/fi';
-import { useAuth } from '../context/AuthContext';
+import { checkUseAuth } from '../context/AuthContext';
 
 const RaiseDemandPage = () => {
-  const { user } = useAuth();
+  const { user } = checkUseAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('facility');

@@ -5,13 +5,19 @@ import Button from '../ui/Button';
 import NavLink from '../ui/NavLink';
 import useNavStore from '../../store/navStore';
 import { NAV_LINKS, COLLEGE_INFO } from '../../utils/constants';
-import { useAuth } from '../../context/AuthContext';
+import { checkUseAuth } from '../../context/AuthContext';
 import ProfileDropdown from '../auth/ProfileDropdown';
 import AuthModal from '../auth/AuthModal';
-
+import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  SignUpButton,
+  UserButton
+} from "@clerk/clerk-react";
 const Navbar = () => {
   const { isMenuOpen, toggleMenu, closeMenu, setActiveRoute } = useNavStore();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user } = checkUseAuth();
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -159,24 +165,52 @@ const Navbar = () => {
                 {isAuthenticated ? (
                   <ProfileDropdown user={user} />
                 ) : (
-                  <div className="flex items-center space-x-3">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      rounded
-                      onClick={() => openAuthModal('login')}
-                    >
-                      Login
-                    </Button>
-                    <Button 
-                      variant="pink" 
-                      size="sm" 
-                      rounded
-                      onClick={() => openAuthModal('signup')}
-                    >
-                      Sign Up
-                    </Button>
-                  </div>
+      //             <div className="flex items-center space-x-3">
+      //               {/* <Button 
+      //                 variant="outline" 
+      //                 size="sm" 
+      //                 rounded
+      //                 onClick={() => openAuthModal('login')}
+      //               >
+      //                 Login
+      //               </Button> */}
+      //                    <SignedIn>
+      //   <UserButton />
+      // </SignedIn>
+      //               <Button 
+      //                 variant="pink" 
+      //                 size="sm" 
+      //                 rounded
+      //                 onClick={() => openAuthModal('signup')}
+      //               >
+      //                 Sign Up
+      //               </Button>
+      //             </div>
+        <div className="flex items-center space-x-3">
+      
+      {/* Show when user is logged in */}
+      <SignedIn>
+        <UserButton afterSignOutUrl="/" />
+      </SignedIn>
+
+      {/* Show when user is not logged in */}
+      <SignedOut>
+        {/* Sign In Button (opens modal) */}
+        <SignInButton mode="modal">
+          <Button variant="outline" size="sm" rounded>
+            Login
+          </Button>
+        </SignInButton>
+
+        {/* Sign Up Button (opens modal) */}
+        <SignUpButton mode="modal">
+          <Button variant="pink" size="sm" rounded>
+            Sign Up
+          </Button>
+        </SignUpButton>
+      </SignedOut>
+      
+    </div>
                 )}
               </motion.div>
 
@@ -261,7 +295,9 @@ const Navbar = () => {
                             size="md" 
                             fullWidth
                             rounded
-                            onClick={() => openAuthModal('login')}
+                            onClick={() =>{ 
+                              openAuthModal('login')
+                            }}
                           >
                             Login
                           </Button>

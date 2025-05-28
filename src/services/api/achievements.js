@@ -4,7 +4,7 @@ const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4001/
 
 // Map API data to frontend format with fallbacks for missing fields
 const mapAchievement = (item) => {
-  return {
+  return {  
     id: item._id || 'NA',
     name: `${item.firstName || ''} ${item.lastName || ''}`.trim() || 'NA',
     profileImage: item.photos || 'https://source.unsplash.com/random/300x300/?portrait',

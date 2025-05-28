@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FiEdit3, FiCamera, FiBookmark, FiCalendar, FiEdit, FiHeart, FiMessageSquare, FiShare2 } from 'react-icons/fi';
-import { useAuth } from '../context/AuthContext';
+import { checkUseAuth } from '../context/AuthContext';
 
 const ProfilePage = () => {
-  const { user } = useAuth();
+  const { user } = checkUseAuth();
   const [activeTab, setActiveTab] = useState('posts');
 
   // Animation variants

@@ -119,7 +119,7 @@ const AchievementModal = ({ achievement, isOpen, onClose }) => {
                 <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
                   {achievement.achievement}
                 </h2>
-                <h3 className="text-xl text-white mt-2">{achievement.headline}</h3>
+                {/* <h3 className="text-xl text-white mt-2">{achievement.headline}</h3> */}
               </div>
               
               {/* Main Details */}
@@ -245,7 +245,7 @@ const AchievementModal = ({ achievement, isOpen, onClose }) => {
                         </div>
                       )}
                       
-                      {achievement.impact && (
+                      {/* {achievement.impact && (
                         <div className="flex items-start">
                           <FiTarget className="text-green-400 mt-1 mr-3 flex-shrink-0" size={18} />
                           <div>
@@ -253,14 +253,14 @@ const AchievementModal = ({ achievement, isOpen, onClose }) => {
                             <div className="text-white">{achievement.impact}</div>
                           </div>
                         </div>
-                      )}
+                      )} */}
                     </div>
                   </div>
                   
                   {/* Skills */}
                   {achievement.skills && achievement.skills.length > 0 && (
                     <div className="bg-white/5 rounded-xl p-5 mb-6">
-                      <h4 className="text-lg font-bold text-white mb-3">Skills & Expertise</h4>
+                      <h4 className="text-lg font-bold text-white mb-3">Tags</h4>
                       <div className="flex flex-wrap gap-2">
                         {achievement.skills.map((skill, index) => (
                           <motion.span
@@ -278,7 +278,7 @@ const AchievementModal = ({ achievement, isOpen, onClose }) => {
                   )}
                   
                   {/* Mentors */}
-                  {achievement.mentors && achievement.mentors.length > 0 && (
+                  {/* {achievement.mentors == "NA" && achievement.mentors.length > 0 && (
                     <div className="bg-white/5 rounded-xl p-5 mb-6">
                       <h4 className="text-lg font-bold text-white mb-3">Mentors</h4>
                       <ul className="space-y-2">
@@ -293,7 +293,7 @@ const AchievementModal = ({ achievement, isOpen, onClose }) => {
                         ))}
                       </ul>
                     </div>
-                  )}
+                  )} */}
                   
                   {/* Team Members */}
                   {achievement.team && achievement.team.length > 0 && (

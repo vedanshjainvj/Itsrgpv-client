@@ -30,8 +30,8 @@ const mapFest = (item) => {
 const festsApi = {
   getFests: async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/fest/get-fests`);
-      console.log("API Response:", response);
+      const response = await axios.get(`${API_BASE_URL}/fest/get-all-fest`);
+      console.log("API Response for fests:", response);
       if (response.data?.data) {
         const mappedFests = response.data.data.map(mapFest);
         return {

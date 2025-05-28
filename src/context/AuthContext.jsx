@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { useAuth, useUser } from "@clerk/clerk-react";
 
 const AuthContext = createContext(null);
 
@@ -36,10 +37,44 @@ export const AuthProvider = ({ children }) => {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-export const useAuth = () => {
+export const checkUseAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error('checkUseAuth must be used within an AuthProvider');
   }
   return context;
 };
+
+// import React, { createContext, useContext } from 'react';
+// import { useAuth, useUser } from '@clerk/clerk-react';
+
+// const AuthContext = createContext(null);
+
+// export const AuthProvider = ({ children }) => {
+//   const { isSignedIn, getToken, userId } = useAuth();
+//   const { user, isLoaded } = useUser();
+//   const logout = () => {
+//     // setUser(null);
+//     console.log("logout call")
+//     localStorage.removeItem('user');
+//   };
+//   const value = {
+//     user,
+//     isAuthenticated: isSignedIn,
+//     loading: !isLoaded,
+//     userId,
+//     login:isSignedIn,
+//     logout,
+//     getToken, // useful for backend API calls
+//   };
+
+//   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+// };
+
+// export const checkUseAuth = () => {
+//   const context = useContext(AuthContext);
+//   if (!context) {
+//     throw new Error('useAuthContext must be used within an AuthProvider');
+//   }
+//   return context;
+// };
