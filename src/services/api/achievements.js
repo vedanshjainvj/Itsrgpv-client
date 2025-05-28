@@ -8,8 +8,8 @@ const mapAchievement = (item) => {
     id: item._id || 'NA',
     name: `${item.firstName || ''} ${item.lastName || ''}`.trim() || 'NA',
     profileImage: item.photos || 'https://source.unsplash.com/random/300x300/?portrait',
-    branch: item.branch || 'NA',
-    year: item.semester ? new Date().getFullYear() - Math.floor(item.semester/2) : 'NA',
+    branch: item.department || 'NA',
+    year: item.achievementDate ? new Date().getFullYear() - Math.floor(item.semester/2) : 'NA',
     achievement: item.achievementTitle || 'NA',
     headline: item.achievementTitle || 'NA',
     category: item.fieldOfAchievement && item.fieldOfAchievement.length > 0 && item.fieldOfAchievement[0] 
