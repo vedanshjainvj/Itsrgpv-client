@@ -17,7 +17,7 @@ import {
 } from "@clerk/clerk-react";
 const Navbar = () => {
   const { isMenuOpen, toggleMenu, closeMenu, setActiveRoute } = useNavStore();
-  const { isAuthenticated, user ,logout,profileStatus} = checkUseAuth();
+  const { isAuthenticated, user ,logout,profileStatus , userData} = checkUseAuth();
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -168,7 +168,7 @@ const Navbar = () => {
                 transition={{ duration: 0.6 }}
               >
                 {isAuthenticated ? (
-                  <ProfileDropdown user={user} />
+                  <ProfileDropdown user={userData} />
                 ) : (
         <div className="flex items-center space-x-3">
       
