@@ -246,7 +246,7 @@ const FestsPage = () => {
                 <div className="relative h-64 overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent z-10"></div>
                   <motion.img 
-                    src={fest.imagbannerPicture} 
+                    src={fest.bannerPicture} 
                     alt={fest.name} 
                     className="w-full h-full object-cover"
                     whileHover={{ scale: 1.05 }}
