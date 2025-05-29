@@ -41,7 +41,7 @@ const DemandCard = ({ demand, onClick }) => {
             whileHover={{ scale: 1.05 }}
           >
             <FiUsers className="mr-1" size={12} />
-            {demand.supporters} supporters
+            438 supporters
           </motion.div>
         </div>
         
