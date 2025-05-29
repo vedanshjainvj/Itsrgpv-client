@@ -158,11 +158,10 @@ const mapNote = (item) => {
 /**
  * Notes API service with CRUD operations
  */
-const notesApi = {
-  /**
-   * Get all notes with optional filtering
+const notesApi = {  /**
+   * Get all notes with optional filtering and pagination
    */
-  getNotes: async (filters = {}) => {
+  getNotes: async (filters = {}, page = 1, limit = 3) => {
     try {
       // Construct query parameters for filtering
       const queryParams = new URLSearchParams();
@@ -171,6 +170,10 @@ const notesApi = {
       if (filters.semester) queryParams.append('semester', filters.semester);
       if (filters.subject) queryParams.append('subjectName', filters.subject);
       
+      // Add pagination parameters
+      queryParams.append('page', page);
+      queryParams.append('limit', limit);
+      
       const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
       
       const response = await axios.get(`${API_BASE_URL}/notes/get-notes${queryString}`);
@@ -178,13 +181,33 @@ const notesApi = {
       
       if (response.data?.data) {
         const mappedNotes = response.data.data.map(mapNote);
+        
+        // If no items returned and we're beyond page 1, we've gone too far
+        if (mappedNotes.length === 0 && page > 1) {
+          return {
+            notes: [],
+            pagination: {
+              totalCount: (page - 1) * limit,
+              currentPage: page,
+              totalPages: page - 1,
+              hasMore: false
+            }
+          };
+        }
+        
+        // Normal case - check if this is likely the last page
+        const isLastPage = mappedNotes.length < limit;
+        const totalItems = isLastPage 
+          ? (page - 1) * limit + mappedNotes.length 
+          : mappedNotes.length * (page + 1); // Better estimate
+        
         return {
           notes: mappedNotes,
           pagination: {
-            totalCount: mappedNotes.length || 0,
-            currentPage: 1,
-            totalPages: 1,
-            hasMore: false,
+            totalCount: totalItems,
+            currentPage: page,
+            totalPages: Math.ceil(totalItems / limit) || 1,
+            hasMore: !isLastPage && mappedNotes.length > 0
           },
         };
       }
@@ -194,23 +217,47 @@ const notesApi = {
       throw error;
     }
   },
-
   /**
-   * Search notes by query string
+   * Search notes by query string with pagination
    */
-  searchNotes: async (query) => {
+  searchNotes: async (query, page = 1, limit = 3) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/notes/search?q=${encodeURIComponent(query)}`);
+      const queryParams = new URLSearchParams();
+      queryParams.append('q', query);
+      queryParams.append('page', page);
+      queryParams.append('limit', limit);
+      
+      const response = await axios.get(`${API_BASE_URL}/notes/search?${queryParams.toString()}`);
       
       if (response.data?.data) {
         const mappedNotes = response.data.data.map(mapNote);
+        
+        // If no items returned and we're beyond page 1, we've gone too far
+        if (mappedNotes.length === 0 && page > 1) {
+          return {
+            notes: [],
+            pagination: {
+              totalCount: (page - 1) * limit,
+              currentPage: page,
+              totalPages: page - 1,
+              hasMore: false
+            }
+          };
+        }
+        
+        // Normal case - check if this is likely the last page
+        const isLastPage = mappedNotes.length < limit;
+        const totalItems = isLastPage 
+          ? (page - 1) * limit + mappedNotes.length 
+          : mappedNotes.length * (page + 1); // Better estimate
+        
         return {
           notes: mappedNotes,
           pagination: {
-            totalCount: mappedNotes.length || 0,
-            currentPage: 1,
-            totalPages: 1,
-            hasMore: false,
+            totalCount: totalItems,
+            currentPage: page,
+            totalPages: Math.ceil(totalItems / limit) || 1,
+            hasMore: !isLastPage && mappedNotes.length > 0
           },
         };
       }

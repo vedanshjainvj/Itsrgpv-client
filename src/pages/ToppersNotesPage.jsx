@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiDownload, FiFilter, FiX, FiSearch, FiStar, FiUser, FiBook, FiTag, FiFileText, FiEye, FiThumbsUp } from 'react-icons/fi';
+import { FiDownload, FiFilter, FiX, FiSearch, FiStar, FiUser, FiBook, FiTag, FiFileText, FiEye, FiThumbsUp, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { NOTES_DATA } from '../utils/constants';
 import notesApi from '../services/api/notes';
 
@@ -23,53 +23,103 @@ const ToppersNotesPage = () => {
   const [sortBy, setSortBy] = useState('rating'); // 'rating', 'downloads', 'date', 'likes'
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
-  // Fetch notes from API
-  useEffect(() => {
-    const fetchNotes = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        
-        // Convert frontend filter format to backend format
-        const apiFilters = {};
-        
-        if (activeFilters.branches.length > 0) {
-          apiFilters.branch = activeFilters.branches[0]; // Use first selected branch
-        }
-        
-        if (activeFilters.semesters.length > 0) {
-          apiFilters.semester = activeFilters.semesters[0]; // Use first selected semester
-        }
-        
-        let response;
-        
-        // If search query exists, use search endpoint
-        if (searchQuery.trim()) {
-          response = await notesApi.searchNotes(searchQuery);
-        } else {
-          // Otherwise use filter endpoint
-          response = await notesApi.getNotes(apiFilters);
-        }
-
-        if (response && response.notes) {
-          setNotes(response.notes);
-        } else {
-          // Fallback to static data
-          console.log('No data from API, using static data');
-          setNotes(NOTES_DATA);
-        }
-      } catch (err) {
-        console.error('Error fetching notes:', err);
-        setError('Failed to load notes. Please try again later.');
-        // Use static data on error
-        setNotes(NOTES_DATA);
-      } finally {
-        setIsLoading(false);
+  // Function to fetch notes with pagination
+  const fetchNotes = async (page = 1) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Convert frontend filter format to backend format
+      const apiFilters = {};
+      
+      if (activeFilters.branches.length > 0) {
+        apiFilters.branch = activeFilters.branches[0]; // Use first selected branch
       }
-    };
+      
+      if (activeFilters.semesters.length > 0) {
+        apiFilters.semester = activeFilters.semesters[0]; // Use first selected semester
+      }
+      
+      const limit = 6; // Define items per page
+      console.log(`Fetching notes from API for page ${page}...`);
+      let response;
+      
+      // If search query exists, use search endpoint
+      if (searchQuery.trim()) {
+        response = await notesApi.searchNotes(searchQuery, page, limit);
+      } else {
+        // Otherwise use filter endpoint
+        response = await notesApi.getNotes(apiFilters, page, limit);
+      }
 
-    fetchNotes();
+      if (response && response.notes) {
+        // Handle case where we've gone past available data
+        if (response.notes.length === 0 && page > 1) {
+          console.log('No notes found for this page, likely past the end');
+          setHasMore(false);
+          // Go back to the last valid page if we went too far
+          fetchNotes(page - 1);
+          return;
+        }
+        
+        setNotes(response.notes);
+        
+        // Update pagination state
+        setCurrentPage(response.pagination.currentPage);
+        setTotalPages(response.pagination.totalPages || 1);
+        setHasMore(response.pagination.hasMore || false);
+        
+        // Log pagination state for debugging
+        console.log(`Page ${response.pagination.currentPage}: Got ${response.notes.length} items of ${limit} requested`);
+        console.log(`Total pages: ${response.pagination.totalPages}, Has more: ${response.pagination.hasMore}`);
+      } else {
+        // Fallback to static data
+        console.log('No data from API, using static data');
+        setNotes(NOTES_DATA);
+        
+        // Reset pagination state
+        setCurrentPage(1);
+        setTotalPages(1);
+        setHasMore(false);
+      }
+    } catch (err) {
+      console.error('Error fetching notes:', err);
+      setError('Failed to load notes. Please try again later.');
+      // Use static data on error
+      setNotes(NOTES_DATA);
+      
+      // Reset pagination state
+      setCurrentPage(1);
+      setTotalPages(1);
+      setHasMore(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Navigate to previous page
+  const goToPrevPage = () => {
+    if (currentPage > 1) {
+      fetchNotes(currentPage - 1);
+    }
+  };
+  
+  // Navigate to next page
+  const goToNextPage = () => {
+    if (hasMore) {
+      fetchNotes(currentPage + 1);
+    }
+  };
+
+  // Initial fetch and when filters/search change
+  useEffect(() => {
+    // Reset to first page when filters or search query changes
+    fetchNotes(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, activeFilters]);
 
   useEffect(() => {
@@ -401,123 +451,172 @@ const ToppersNotesPage = () => {
             </div>
           </motion.div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredNotes.map((note, index) => (
-              <motion.div
-                key={note.id}
-                className="bg-gradient-to-b from-gray-900/80 to-black/80 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden hover:shadow-lg hover:shadow-pink-500/10 transition-all group"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ 
-                  opacity: 1, 
-                  y: 0,
-                  transition: { 
-                    duration: 0.5,
-                    delay: index * 0.05
-                  }
-                }}
-                whileHover={{ y: -5 }}
-              >
-                <div className="relative h-40 overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent z-10"></div>
-                  <img 
-                    src={note.coverImage} 
-                    alt={note.title} 
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute top-3 right-3 z-20">
-                    <div className="flex items-center gap-1 bg-black/60 backdrop-blur-sm rounded-full px-2 py-1">
-                      <FiStar className="text-yellow-400" />
-                      <span className="text-white text-sm font-medium">{note.rating}</span>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredNotes.map((note, index) => (
+                <motion.div
+                  key={note.id}
+                  className="bg-gradient-to-b from-gray-900/80 to-black/80 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden hover:shadow-lg hover:shadow-pink-500/10 transition-all group"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ 
+                    opacity: 1, 
+                    y: 0,
+                    transition: { 
+                      duration: 0.5,
+                      delay: index * 0.05
+                    }
+                  }}
+                  whileHover={{ y: -5 }}
+                >
+                  <div className="relative h-40 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent z-10"></div>
+                    <img 
+                      src={note.coverImage} 
+                      alt={note.title} 
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute top-3 right-3 z-20">
+                      <div className="flex items-center gap-1 bg-black/60 backdrop-blur-sm rounded-full px-2 py-1">
+                        <FiStar className="text-yellow-400" />
+                        <span className="text-white text-sm font-medium">{note.rating}</span>
+                      </div>
+                    </div>
+                    <div className="absolute bottom-3 left-3 z-20">
+                      <div className="bg-pink-500/90 text-white text-xs font-medium px-2 py-1 rounded-full">
+                        {note.branch} • Sem {note.semester}
+                      </div>
                     </div>
                   </div>
-                  <div className="absolute bottom-3 left-3 z-20">
-                    <div className="bg-pink-500/90 text-white text-xs font-medium px-2 py-1 rounded-full">
-                      {note.branch} • Sem {note.semester}
+                  
+                  <div className="p-5">
+                    <h3 className="text-white font-bold text-lg mb-1 line-clamp-2 group-hover:text-pink-400 transition-colors">
+                      {note.title}
+                    </h3>
+                    <p className="text-gray-400 text-sm mb-3 flex items-center">
+                      <FiUser className="mr-1" />
+                      <span>{note.author}</span>
+                      <span className="mx-1">•</span>
+                      <span className="text-xs">{note.authorBatch}</span>
+                    </p>
+                    <p className="text-gray-300 text-sm line-clamp-2 mb-4">{note.description}</p>
+                    
+                    <div className="flex justify-between items-center mb-4 text-xs text-gray-400">
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center">
+                          <FiEye className="mr-1" />
+                          {note.views}
+                        </span>
+                        <span className="flex items-center">
+                          <FiDownload className="mr-1" />
+                          {note.downloads}
+                        </span>
+                        <span className="flex items-center">
+                          <FiThumbsUp className="mr-1" />
+                          {note.likes}
+                        </span>
+                      </div>
+                      <span className="flex items-center">
+                        <FiFileText className="mr-1" />
+                        {note.pages} pages
+                      </span>
+                    </div>
+                    
+                    <div className="flex gap-2 mb-4">
+                      {note.tags.slice(0, 3).map((tag, i) => (
+                        <span 
+                          key={i}
+                          className="text-xs px-2 py-0.5 bg-white/5 text-gray-400 rounded"
+                        >
+                          #{tag}
+                        </span>
+                      ))}
+                      {note.tags.length > 3 && (
+                        <span className="text-xs px-2 py-0.5 bg-white/5 text-gray-400 rounded">
+                          +{note.tags.length - 3}
+                        </span>
+                      )}
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => viewNoteDetails(note)}
+                        className="flex-1 bg-white/10 hover:bg-white/20 transition-colors text-white py-2 rounded-lg text-sm"
+                      >
+                        View Details
+                      </button>
+                      <button 
+                        onClick={() => handleDownload(note.id)}
+                        disabled={downloadingId === note.id}
+                        className={`flex-1 ${
+                          downloadingId === note.id 
+                            ? 'bg-green-500 text-white' 
+                            : 'bg-pink-500 hover:bg-pink-600 text-white'
+                        } py-2 rounded-lg text-sm transition-all flex items-center justify-center`}
+                      >
+                        {downloadingId === note.id ? (
+                          <>
+                            <span className="animate-pulse">Downloading...</span>
+                          </>
+                        ) : (
+                          <>
+                            <FiDownload className="mr-1" />
+                            <span>Download</span>
+                          </>
+                        )}
+                      </button>
                     </div>
                   </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            <div className="mb-12">
+              <div className="flex justify-center items-center mt-10 space-x-4">
+                <button 
+                  onClick={goToPrevPage}
+                  disabled={currentPage <= 1}
+                  className={`flex items-center justify-center w-10 h-10 rounded-full ${
+                    currentPage <= 1 
+                      ? 'bg-gray-700/30 cursor-not-allowed' 
+                      : 'bg-pink-500/20 hover:bg-pink-500/30'
+                  } transition-colors`}
+                >
+                  <FiChevronLeft className={`${currentPage <= 1 ? 'text-gray-600' : 'text-white'}`} />
+                </button>
+                
+                <div className="text-white bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg">
+                  Page {currentPage}
                 </div>
                 
-                <div className="p-5">
-                  <h3 className="text-white font-bold text-lg mb-1 line-clamp-2 group-hover:text-pink-400 transition-colors">
-                    {note.title}
-                  </h3>
-                  <p className="text-gray-400 text-sm mb-3 flex items-center">
-                    <FiUser className="mr-1" />
-                    <span>{note.author}</span>
-                    <span className="mx-1">•</span>
-                    <span className="text-xs">{note.authorBatch}</span>
+                <button 
+                  onClick={goToNextPage}
+                  disabled={!hasMore}
+                  className={`flex items-center justify-center w-10 h-10 rounded-full ${
+                    !hasMore 
+                      ? 'bg-gray-700/30 cursor-not-allowed' 
+                      : 'bg-pink-500/20 hover:bg-pink-500/30'
+                  } transition-colors`}
+                >
+                  <FiChevronRight className={`${!hasMore ? 'text-gray-600' : 'text-white'}`} />
+                </button>
+              </div>
+              
+              {/* Last Page Message */}
+              {!hasMore && (
+                <motion.div 
+                  className="text-center mt-4 text-gray-400"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <p className="inline-block bg-white/5 backdrop-blur-sm px-4 py-2 rounded-lg">
+                    You've reached the last page of notes
                   </p>
-                  <p className="text-gray-300 text-sm line-clamp-2 mb-4">{note.description}</p>
-                  
-                  <div className="flex justify-between items-center mb-4 text-xs text-gray-400">
-                    <div className="flex items-center gap-3">
-                      <span className="flex items-center">
-                        <FiEye className="mr-1" />
-                        {note.views}
-                      </span>
-                      <span className="flex items-center">
-                        <FiDownload className="mr-1" />
-                        {note.downloads}
-                      </span>
-                      <span className="flex items-center">
-                        <FiThumbsUp className="mr-1" />
-                        {note.likes}
-                      </span>
-                    </div>
-                    <span className="flex items-center">
-                      <FiFileText className="mr-1" />
-                      {note.pages} pages
-                    </span>
-                  </div>
-                  
-                  <div className="flex gap-2 mb-4">
-                    {note.tags.slice(0, 3).map((tag, i) => (
-                      <span 
-                        key={i}
-                        className="text-xs px-2 py-0.5 bg-white/5 text-gray-400 rounded"
-                      >
-                        #{tag}
-                      </span>
-                    ))}
-                    {note.tags.length > 3 && (
-                      <span className="text-xs px-2 py-0.5 bg-white/5 text-gray-400 rounded">
-                        +{note.tags.length - 3}
-                      </span>
-                    )}
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={() => viewNoteDetails(note)}
-                      className="flex-1 bg-white/10 hover:bg-white/20 transition-colors text-white py-2 rounded-lg text-sm"
-                    >
-                      View Details
-                    </button>
-                    <button 
-                      onClick={() => handleDownload(note.id)}
-                      disabled={downloadingId === note.id}
-                      className={`flex-1 ${
-                        downloadingId === note.id 
-                          ? 'bg-green-500 text-white' 
-                          : 'bg-pink-500 hover:bg-pink-600 text-white'
-                      } py-2 rounded-lg text-sm transition-all flex items-center justify-center`}
-                    >
-                      {downloadingId === note.id ? (
-                        <>
-                          <span className="animate-pulse">Downloading...</span>
-                        </>
-                      ) : (
-                        <>
-                          <FiDownload className="mr-1" />
-                          <span>Download</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                </motion.div>
+              )}
+            </div>
+          </>
         )}
 
       </div>
