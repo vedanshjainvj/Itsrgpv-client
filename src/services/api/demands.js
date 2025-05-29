@@ -15,7 +15,7 @@ const mapDemand = (item) => {
     status: item.demandStatus || 'NA',
     dateSubmitted: item.createdAt || 'NA',
     supporters: 'NA',
-    progress: item.progessCount || 'NA',
+    progress: item.progressCount || 'NA',
     
     // Fields used in DemandModal component
     description: item.description || 'NA',
