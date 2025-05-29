@@ -460,7 +460,7 @@ export const NAV_LINKS = [
       description: 'Students showcasing their innovative tech projects',
       category: 'events',
       timestamp: '2023-03-15',
-      imageUrl: 'https://images.pexels.com/photos/1603650/pexels-photo-1603650.jpeg?cs=srgb&dl=pexels-sudipta-1603650.jpg&fm=jpg',
+      imageUrl: 'https://www.rgpv.ac.in/images/slider/new_slide1.jpg',
       width: 600,
       height: 800
     },
@@ -470,7 +470,7 @@ export const NAV_LINKS = [
       description: 'Main academic building on a sunny day',
       category: 'campus',
       timestamp: '2023-01-20',
-      imageUrl: 'https://plus.unsplash.com/premium_photo-1661915320026-84ca2c96faa7?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8cGxhY2VzJTIwdG8lMjB2aXNpdCUyMGluJTIwaW5kaWF8ZW58MHx8MHx8fDA%3D',
+      imageUrl: 'https://www.rgpv.ac.in/images/slider/new_slide2.jpg',
       width: 800,
       height: 600
     },
@@ -480,7 +480,7 @@ export const NAV_LINKS = [
       description: 'Dance performance during the cultural night',
       category: 'events',
       timestamp: '2023-02-10',
-      imageUrl: 'https://media.istockphoto.com/id/942152278/photo/gadisar-lake-at-jaisalmer-rajasthan-at-sunrise-with-ancient-temples-and-archaeological-ruins.jpg?s=612x612&w=0&k=20&c=HvhbHZ8HH_lAjAAI2pmqL4mUipyyAwy31qp5jjKQTO0=',
+      imageUrl: 'https://static.mygov.in/indiancc/2022/07/mygov-1000000000204301158.jpg',
       width: 600,
       height: 600
     },
@@ -490,7 +490,7 @@ export const NAV_LINKS = [
       description: 'Students celebrating graduation',
       category: 'academics',
       timestamp: '2023-05-25',
-      imageUrl: 'https://www.usnews.com/object/image/00000163-8d5b-d398-ad7f-8dfff5760000/3-eiffel-tower-getty.jpg?update-time=1739553789196&size=responsive640',
+      imageUrl: 'https://i.ytimg.com/vi/t1jVdkjX51Y/sddefault.jpg',
       width: 800,
       height: 500
     },
@@ -500,7 +500,7 @@ export const NAV_LINKS = [
       description: 'Students working on robotics projects',
       category: 'academics',
       timestamp: '2023-04-12',
-      imageUrl: 'https://media.istockphoto.com/id/520838006/photo/famous-temples-of-khajuraho.jpg?s=612x612&w=0&k=20&c=Q4YDdXoUpQ6SC5HKv7-P7fzzBL2sS2koRSxvrBoR9SI=',
+      imageUrl: 'https://www.rgpv.ac.in/images/Sport-Complex/sport-complex5.jpg',
       width: 700,
       height: 900
     },
@@ -510,7 +510,7 @@ export const NAV_LINKS = [
       description: 'Annual inter-college sports competition',
       category: 'sports',
       timestamp: '2023-03-30',
-      imageUrl: 'https://www.travelladda.com/package/New_delhi_tr.jpg',
+      imageUrl: 'https://collegegyan24.edugrown.in/wp-content/uploads/2020/12/university-institute-of-technology-rajiv-gandhi-proudyogiki-vishwavidyalaya-uit-rgpv-bhopal-800x400.jpg',
       width: 800,
       height: 600
     }
