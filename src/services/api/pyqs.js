@@ -101,11 +101,10 @@ const mapPyq = (item) => {
 /**
  * PYQs API service with CRUD operations
  */
-const pyqsApi = {
-  /**
-   * Get all PYQs with optional filtering
+const pyqsApi = {  /**
+   * Get all PYQs with optional filtering and pagination
    */
-  getPyqs: async (filters = {}) => {
+  getPyqs: async (filters = {}, page = 1, limit = 3) => {
     try {
       // Construct query parameters for filtering
       const queryParams = new URLSearchParams();
@@ -115,6 +114,10 @@ const pyqsApi = {
       if (filters.type) queryParams.append('paperType', filters.type);
       if (filters.semester) queryParams.append('semester', filters.semester);
       
+      // Add pagination parameters
+      queryParams.append('page', page);
+      queryParams.append('limit', limit);
+      
       const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
       
       const response = await axios.get(`${API_BASE_URL}/pyq/get-pyq${queryString}`);
@@ -122,13 +125,33 @@ const pyqsApi = {
       
       if (response.data?.data) {
         const mappedPyqs = response.data.data.map(mapPyq);
+        
+        // If no items returned and we're beyond page 1, we've gone too far
+        if (mappedPyqs.length === 0 && page > 1) {
+          return {
+            pyqs: [],
+            pagination: {
+              totalCount: (page - 1) * limit,
+              currentPage: page,
+              totalPages: page - 1,
+              hasMore: false
+            }
+          };
+        }
+        
+        // Normal case - check if this is likely the last page
+        const isLastPage = mappedPyqs.length < limit;
+        const totalItems = isLastPage 
+          ? (page - 1) * limit + mappedPyqs.length 
+          : mappedPyqs.length * (page + 1); // Better estimate
+        
         return {
           pyqs: mappedPyqs,
           pagination: {
-            totalCount: mappedPyqs.length || 0,
-            currentPage: 1,
-            totalPages: 1,
-            hasMore: false,
+            totalCount: totalItems,
+            currentPage: page,
+            totalPages: Math.ceil(totalItems / limit) || 1,
+            hasMore: !isLastPage && mappedPyqs.length > 0
           },
         };
       }
@@ -138,23 +161,47 @@ const pyqsApi = {
       throw error;
     }
   },
-
   /**
-   * Search PYQs by query string
+   * Search PYQs by query string with pagination
    */
-  searchPyqs: async (query) => {
+  searchPyqs: async (query, page = 1, limit = 3) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/pyq/search-pyqs?q=${query}`);
+      const queryParams = new URLSearchParams();
+      queryParams.append('q', query);
+      queryParams.append('page', page);
+      queryParams.append('limit', limit);
+      
+      const response = await axios.get(`${API_BASE_URL}/pyq/search-pyqs?${queryParams.toString()}`);
       
       if (response.data?.data) {
         const mappedPyqs = response.data.data.map(mapPyq);
+        
+        // If no items returned and we're beyond page 1, we've gone too far
+        if (mappedPyqs.length === 0 && page > 1) {
+          return {
+            pyqs: [],
+            pagination: {
+              totalCount: (page - 1) * limit,
+              currentPage: page,
+              totalPages: page - 1,
+              hasMore: false
+            }
+          };
+        }
+        
+        // Normal case - check if this is likely the last page
+        const isLastPage = mappedPyqs.length < limit;
+        const totalItems = isLastPage 
+          ? (page - 1) * limit + mappedPyqs.length 
+          : mappedPyqs.length * (page + 1); // Better estimate
+        
         return {
           pyqs: mappedPyqs,
           pagination: {
-            totalCount: mappedPyqs.length || 0,
-            currentPage: 1,
-            totalPages: 1,
-            hasMore: false,
+            totalCount: totalItems,
+            currentPage: page,
+            totalPages: Math.ceil(totalItems / limit) || 1,
+            hasMore: !isLastPage && mappedPyqs.length > 0
           },
         };
       }

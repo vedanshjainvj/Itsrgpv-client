@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiDownload, FiSearch, FiFilter, FiX, FiClock, FiCalendar, FiBookOpen, FiCode } from 'react-icons/fi';
+import { FiDownload, FiSearch, FiFilter, FiX, FiClock, FiCalendar, FiBookOpen, FiCode, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { SAMPLE_PYQS } from '../utils/constants';
 import pyqsApi from '../services/api/pyqs';
 
@@ -22,66 +22,115 @@ const PyqsPage = () => {
   const [downloadingId, setDownloadingId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
-  // Fetch PYQs from API
-  useEffect(() => {
-    const fetchPyqs = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        
-        // Convert frontend filter format to backend format
-        const apiFilters = {};
-        
-        if (activeFilters.years.length > 0) {
-          apiFilters.year = activeFilters.years[0]; // Use first selected year
-        }
-        
-        if (activeFilters.branches.length > 0) {
-          apiFilters.branch = activeFilters.branches[0]; // Use first selected branch
-        }
-        
-        if (activeFilters.types.length > 0) {
-          // Convert frontend format to backend format
-          const typeMapping = {
-            'end-sem': 'endsem',
-            'mid-sem': 'midsem',
-            'assignment': 'assignment',
-            'back-paper': 'back'
-          };
-          apiFilters.type = typeMapping[activeFilters.types[0]]; // Use first selected type
-        }
-        
-        let response;
-
-        // If search query exists, use search endpoint
-        if (searchQuery.trim()) {
-          response = await pyqsApi.searchPyqs(searchQuery);
-        } else {
-          // Otherwise use filter endpoint
-          response = await pyqsApi.getPyqs(apiFilters);
-        }
-        
-        if (response && response.pyqs) {
-          setPyqs(response.pyqs);
-        } else {
-          // Fallback to static data
-          console.log('No data from API, using static data');
-          setPyqs(SAMPLE_PYQS);
-        }
-      } catch (err) {
-        console.error('Error fetching PYQs:', err);
-        setError('Failed to load question papers. Please try again later.');
-        // Use static data on error
-        setPyqs(SAMPLE_PYQS);
-      } finally {
-        setIsLoading(false);
+  // Function to fetch PYQs with pagination
+  const fetchPyqs = async (page = 1) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      // Convert frontend filter format to backend format
+      const apiFilters = {};
+      
+      if (activeFilters.years.length > 0) {
+        apiFilters.year = activeFilters.years[0]; // Use first selected year
       }
-    };
+      
+      if (activeFilters.branches.length > 0) {
+        apiFilters.branch = activeFilters.branches[0]; // Use first selected branch
+      }
+      
+      if (activeFilters.types.length > 0) {
+        // Convert frontend format to backend format
+        const typeMapping = {
+          'end-sem': 'endsem',
+          'mid-sem': 'midsem',
+          'assignment': 'assignment',
+          'back-paper': 'back'
+        };
+        apiFilters.type = typeMapping[activeFilters.types[0]]; // Use first selected type
+      }
+      
+      const limit = 6; // Define items per page
+      console.log(`Fetching PYQs from API for page ${page}...`);
+      let response;
 
-    fetchPyqs();
+      // If search query exists, use search endpoint
+      if (searchQuery.trim()) {
+        response = await pyqsApi.searchPyqs(searchQuery, page, limit);
+      } else {
+        // Otherwise use filter endpoint
+        response = await pyqsApi.getPyqs(apiFilters, page, limit);
+      }
+      
+      if (response && response.pyqs) {
+        // Handle case where we've gone past available data
+        if (response.pyqs.length === 0 && page > 1) {
+          console.log('No PYQs found for this page, likely past the end');
+          setHasMore(false);
+          // Go back to the last valid page if we went too far
+          fetchPyqs(page - 1);
+          return;
+        }
+        
+        setPyqs(response.pyqs);
+        
+        // Update pagination state
+        setCurrentPage(response.pagination.currentPage);
+        setTotalPages(response.pagination.totalPages || 1);
+        setHasMore(response.pagination.hasMore || false);
+        
+        // Log pagination state for debugging
+        console.log(`Page ${response.pagination.currentPage}: Got ${response.pyqs.length} items of ${limit} requested`);
+        console.log(`Total pages: ${response.pagination.totalPages}, Has more: ${response.pagination.hasMore}`);
+      } else {
+        // Fallback to static data
+        console.log('No data from API, using static data');
+        setPyqs(SAMPLE_PYQS);
+        
+        // Reset pagination state
+        setCurrentPage(1);
+        setTotalPages(1);
+        setHasMore(false);
+      }
+    } catch (err) {
+      console.error('Error fetching PYQs:', err);
+      setError('Failed to load question papers. Please try again later.');
+      // Use static data on error
+      setPyqs(SAMPLE_PYQS);
+      
+      // Reset pagination state
+      setCurrentPage(1);
+      setTotalPages(1);
+      setHasMore(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Navigate to previous page
+  const goToPrevPage = () => {
+    if (currentPage > 1) {
+      fetchPyqs(currentPage - 1);
+    }
+  };
+  
+  // Navigate to next page
+  const goToNextPage = () => {
+    if (hasMore) {
+      fetchPyqs(currentPage + 1);
+    }
+  };
+
+  // Initial fetch and when filters/search change
+  useEffect(() => {
+    // Reset to first page when filters or search query changes
+    fetchPyqs(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, activeFilters]);
-
 
   useEffect(() => {
     // Filter PyQs based on search query and active filters
@@ -353,114 +402,160 @@ const PyqsPage = () => {
             </div>
           </motion.div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredPyqs.map((pyq, index) => (
-              <motion.div
-                key={pyq.id}
-                className="bg-gradient-to-b from-gray-900/80 to-black/80 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden hover:shadow-lg hover:shadow-purple-500/10 transition-all group"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ 
-                  opacity: 1, 
-                  y: 0,
-                  transition: { 
-                    duration: 0.5,
-                    delay: index * 0.05
-                  }
-                }}
-                whileHover={{ y: -5 }}
-              >
-                <div className="p-6">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="text-white font-bold text-lg mb-1 group-hover:text-purple-400 transition-colors">
-                        {pyq.subjectName}
-                      </h3>
-                      <p className="text-gray-400 text-sm">{pyq.subjectCode}</p>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredPyqs.map((pyq, index) => (
+                <motion.div
+                  key={pyq.id}
+                  className="bg-gradient-to-b from-gray-900/80 to-black/80 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden hover:shadow-lg hover:shadow-purple-500/10 transition-all group"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ 
+                    opacity: 1, 
+                    y: 0,
+                    transition: { 
+                      duration: 0.5,
+                      delay: index * 0.05
+                    }
+                  }}
+                  whileHover={{ y: -5 }}
+                >
+                  <div className="p-6">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="text-white font-bold text-lg mb-1 group-hover:text-purple-400 transition-colors">
+                          {pyq.subjectName}
+                        </h3>
+                        <p className="text-gray-400 text-sm">{pyq.subjectCode}</p>
+                      </div>
+                      <div className={`px-3 py-1 rounded-full text-xs ${
+                        pyq.type === 'end-sem' ? 'bg-blue-500/20 text-blue-300' :
+                        pyq.type === 'mid-sem' ? 'bg-purple-500/20 text-purple-300' :
+                        'bg-pink-500/20 text-pink-300'
+                      }`}>
+                        {pyq.type.replace('-', ' ')}
+                      </div>
                     </div>
-                    <div className={`px-3 py-1 rounded-full text-xs ${
-                      pyq.type === 'end-sem' ? 'bg-blue-500/20 text-blue-300' :
-                      pyq.type === 'mid-sem' ? 'bg-purple-500/20 text-purple-300' :
-                      'bg-pink-500/20 text-pink-300'
-                    }`}>
-                      {pyq.type.replace('-', ' ')}
+                    
+                    <div className="mt-4 flex gap-4 text-sm text-gray-400">
+                      <div className="flex items-center">
+                        <FiCalendar className="mr-1" />
+                        <span>{pyq.year}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <FiCode className="mr-1" />
+                        <span>{pyq.branch}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <FiBookOpen className="mr-1" />
+                        <span>Sem {pyq.semester}</span>
+                      </div>
                     </div>
-                  </div>
-                  
-                  <div className="mt-4 flex gap-4 text-sm text-gray-400">
-                    <div className="flex items-center">
-                      <FiCalendar className="mr-1" />
-                      <span>{pyq.year}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <FiCode className="mr-1" />
-                      <span>{pyq.branch}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <FiBookOpen className="mr-1" />
-                      <span>Sem {pyq.semester}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {pyq.tags && pyq.tags.map((tag, i) => (
-                      <span 
-                        key={i}
-                        className="text-xs px-2 py-0.5 bg-white/5 text-gray-400 rounded"
-                      >
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="border-t border-white/5 p-4 flex justify-between items-center">
-                  <div className="flex items-center text-gray-400 text-sm">
-                    <FiClock className="mr-1" />
-                    <span>PDF • {pyq.fileSize || '2.3 MB'}</span>
-                  </div>
-                  
-                  <button 
-                    onClick={() => handleDownload(pyq.id)}
-                    disabled={downloadingId === pyq.id}
-                    className={`relative flex items-center justify-center ${
-                      downloadingId === pyq.id 
-                        ? 'bg-green-500 text-white px-6' 
-                        : 'bg-purple-500 hover:bg-purple-600 text-white px-4'
-                    } py-2 rounded-lg transition-all overflow-hidden`}
-                  >
-                    {downloadingId === pyq.id ? (
-                      <>
-                        <motion.div 
-                          className="absolute inset-0 flex items-center justify-center"
-                          initial={{ x: 60 }}
-                          animate={{ x: 0 }}
-                          transition={{ duration: 0.3 }}
+                    
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {pyq.tags && pyq.tags.map((tag, i) => (
+                        <span 
+                          key={i}
+                          className="text-xs px-2 py-0.5 bg-white/5 text-gray-400 rounded"
                         >
-                          Downloaded
-                        </motion.div>
-                        <motion.div 
-                          className="flex items-center"
-                          initial={{ x: 0 }}
-                          animate={{ x: -60 }}
-                          transition={{ duration: 0.3 }}
-                        >
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div className="border-t border-white/5 p-4 flex justify-between items-center">
+                    <div className="flex items-center text-gray-400 text-sm">
+                      <FiClock className="mr-1" />
+                      <span>PDF • {pyq.fileSize || '2.3 MB'}</span>
+                    </div>
+                    
+                    <button 
+                      onClick={() => handleDownload(pyq.id)}
+                      disabled={downloadingId === pyq.id}
+                      className={`relative flex items-center justify-center ${
+                        downloadingId === pyq.id 
+                          ? 'bg-green-500 text-white px-6' 
+                          : 'bg-purple-500 hover:bg-purple-600 text-white px-4'
+                      } py-2 rounded-lg transition-all overflow-hidden`}
+                    >
+                      {downloadingId === pyq.id ? (
+                        <>
+                          <motion.div 
+                            className="absolute inset-0 flex items-center justify-center"
+                            initial={{ x: 60 }}
+                            animate={{ x: 0 }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            Downloaded
+                          </motion.div>
+                          <motion.div 
+                            className="flex items-center"
+                            initial={{ x: 0 }}
+                            animate={{ x: -60 }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <FiDownload className="mr-1" />
+                            <span>Download</span>
+                          </motion.div>
+                        </>
+                      ) : (
+                        <>
                           <FiDownload className="mr-1" />
                           <span>Download</span>
-                        </motion.div>
-                      </>
-                    ) : (
-                      <>
-                        <FiDownload className="mr-1" />
-                        <span>Download</span>
-                      </>
-                    )}
-                  </button>
-                </div>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+            
+            {/* Pagination Controls */}
+            <div className="flex justify-center items-center mt-10 mb-12 space-x-4">
+              <button 
+                onClick={goToPrevPage}
+                disabled={currentPage <= 1}
+                className={`flex items-center justify-center w-10 h-10 rounded-full ${
+                  currentPage <= 1 
+                    ? 'bg-gray-700/30 cursor-not-allowed' 
+                    : 'bg-purple-500/20 hover:bg-purple-500/30'
+                } transition-colors`}
+              >
+                <FiChevronLeft className={`${currentPage <= 1 ? 'text-gray-600' : 'text-white'}`} />
+              </button>
+              
+              <div className="text-white bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg">
+                Page {currentPage}
+              </div>
+              
+              <button 
+                onClick={goToNextPage}
+                disabled={!hasMore}
+                className={`flex items-center justify-center w-10 h-10 rounded-full ${
+                  !hasMore 
+                    ? 'bg-gray-700/30 cursor-not-allowed' 
+                    : 'bg-purple-500/20 hover:bg-purple-500/30'
+                } transition-colors`}
+              >
+                <FiChevronRight className={`${!hasMore ? 'text-gray-600' : 'text-white'}`} />
+              </button>
+            </div>
+            
+            {/* Last Page Message */}
+            {!hasMore && (
+              <motion.div 
+                className="text-center mb-12 text-gray-400"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <p className="inline-block bg-white/5 backdrop-blur-sm px-4 py-2 rounded-lg">
+                  You've reached the last page of question papers
+                </p>
               </motion.div>
-            ))}
-          </div>
+            )}
+          </>
         )}
-        
       </div>
     </div>
   );
