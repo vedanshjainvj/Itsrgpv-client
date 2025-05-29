@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { FiSearch, FiX, FiCalendar, FiMapPin } from 'react-icons/fi';
+import { FiSearch, FiX, FiCalendar, FiMapPin, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import EventCard from '../components/sections/EventCard';
 import EventsFilter from '../components/sections/EventFilters';
 import eventsApi from '../services/api/events';
@@ -11,11 +11,13 @@ const EventsPage = () => {
   const [activeCategory, setActiveCategory] = useState('all');
   const [timeFilter, setTimeFilter] = useState('all');
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
-  const [events, setEvents] = useState([]);
+  const [showFilters, setShowFilters] = useState(false);  const [events, setEvents] = useState([]);
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   
   // Animation properties
   const { scrollYProgress } = useScroll();
@@ -26,90 +28,150 @@ const EventsPage = () => {
   const filterCount = 
     (activeCategory !== 'all' ? 1 : 0) + 
     (timeFilter !== 'all' ? 1 : 0) + 
-    (showFeaturedOnly ? 1 : 0);
-
-  // Fetch events from API
-  useEffect(() => {
-    const fetchEvents = async () => {
-      setLoading(true);
-      try {
-        const response = await eventsApi.getEvents();
+    (showFeaturedOnly ? 1 : 0);  // Fetch events from API with pagination
+  const fetchEvents = useCallback(async (page = 1) => {
+    setLoading(true);
+    try {
+      const limit = 3; // Define items per page
+      console.log(`Fetching events from API for page ${page}...`);
+      const response = await eventsApi.getEvents(page, limit);
+      
+      if (response && response.events) {
+        // Handle case where we've gone past available data
+        if (response.events.length === 0 && page > 1) {
+          console.log('No events found for this page, likely past the end');
+          setHasMore(false);
+          // Go back to the last valid page if we went too far
+          fetchEvents(page - 1);
+          return;
+        }
+        
         setEvents(response.events);
         setFilteredEvents(response.events);
+        
+        // Update pagination state
+        setCurrentPage(response.pagination.currentPage);
+        setTotalPages(response.pagination.totalPages || 1);
+        setHasMore(response.pagination.hasMore || false);
+        
+        // Log pagination state for debugging
+        console.log(`Page ${response.pagination.currentPage}: Got ${response.events.length} items of ${limit} requested`);
+        console.log(`Total pages: ${response.pagination.totalPages}, Has more: ${response.pagination.hasMore}`);
+        
         setError(null);
-      } catch (err) {
-        console.error('Failed to fetch events:', err);
-        setError('Failed to load events. Please try again later.');
-        setEvents([]);
-        setFilteredEvents([]);
-      } finally {
-        setLoading(false);
       }
-    };
-
-    fetchEvents();
+    } catch (err) {
+      console.error('Failed to fetch events:', err);
+      setError('Failed to load events. Please try again later.');
+      setEvents([]);
+      setFilteredEvents([]);
+      
+      // Reset pagination state on error
+      setCurrentPage(1);
+      setTotalPages(1);
+      setHasMore(false);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
+  // Initial data fetch
+  useEffect(() => {
+    fetchEvents(1);
+  }, [fetchEvents]);
   // Filter events when search query or filters change
   useEffect(() => {
-    // Get current date
-    const currentDate = new Date();
-    const currentMonth = currentDate.getMonth();
-    const currentYear = currentDate.getFullYear();
-    
-    // Get start of current week (Sunday)
-    const startOfWeek = new Date(currentDate);
-    startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
-    startOfWeek.setHours(0, 0, 0, 0);
-    
-    // Filter events based on search query and active filters
-    const filtered = events.filter(event => {
-      // Search query filter
-      const searchMatch = searchQuery === '' || 
-        event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (event.description && event.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (event.shortDescription && event.shortDescription.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (Array.isArray(event.tags) && event.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())));
+    // If any filter changes, reset to page 1
+    if (searchQuery || activeCategory !== 'all' || timeFilter !== 'all' || showFeaturedOnly) {
+      // Get current date
+      const currentDate = new Date();
+      const currentMonth = currentDate.getMonth();
+      const currentYear = currentDate.getFullYear();
       
-      // Category filter
-      const categoryMatch = activeCategory === 'all' || event.category === activeCategory;
+      // Get start of current week (Sunday)
+      const startOfWeek = new Date(currentDate);
+      startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
+      startOfWeek.setHours(0, 0, 0, 0);
       
-      // Featured filter
-      const featuredMatch = !showFeaturedOnly || event.featured;
+      // Filter events based on search query and active filters
+      const filtered = events.filter(event => {
+        // Search query filter
+        const searchMatch = searchQuery === '' || 
+          event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (event.description && event.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          (event.shortDescription && event.shortDescription.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          (Array.isArray(event.tags) && event.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())));
+        
+        // Category filter
+        const categoryMatch = activeCategory === 'all' || event.category === activeCategory;
+        
+        // Featured filter
+        const featuredMatch = !showFeaturedOnly || event.featured;
+        
+        // Time filter
+        const eventDate = new Date(event.date);
+        let timeMatch = true;
+        
+        if (timeFilter === 'upcoming') {
+          timeMatch = eventDate >= currentDate;
+        } else if (timeFilter === 'this-month') {
+          timeMatch = eventDate.getMonth() === currentMonth && eventDate.getFullYear() === currentYear;
+        } else if (timeFilter === 'this-week') {
+          const endOfWeek = new Date(startOfWeek);
+          endOfWeek.setDate(startOfWeek.getDate() + 6);
+          endOfWeek.setHours(23, 59, 59, 999);
+          timeMatch = eventDate >= startOfWeek && eventDate <= endOfWeek;
+        } else if (timeFilter === 'past') {
+          timeMatch = eventDate < currentDate;
+        }
+        
+        return searchMatch && categoryMatch && featuredMatch && timeMatch;
+      });
       
-      // Time filter
-      const eventDate = new Date(event.date);
-      let timeMatch = true;
-      
-      if (timeFilter === 'upcoming') {
-        timeMatch = eventDate >= currentDate;
-      } else if (timeFilter === 'this-month') {
-        timeMatch = eventDate.getMonth() === currentMonth && eventDate.getFullYear() === currentYear;
-      } else if (timeFilter === 'this-week') {
-        const endOfWeek = new Date(startOfWeek);
-        endOfWeek.setDate(startOfWeek.getDate() + 6);
-        endOfWeek.setHours(23, 59, 59, 999);
-        timeMatch = eventDate >= startOfWeek && eventDate <= endOfWeek;
-      } else if (timeFilter === 'past') {
-        timeMatch = eventDate < currentDate;
-      }
-      
-      return searchMatch && categoryMatch && featuredMatch && timeMatch;
-    });
-    
-    setFilteredEvents(filtered);
-  }, [searchQuery, activeCategory, timeFilter, showFeaturedOnly, events]);
-
-  // Reset all filters
+      setFilteredEvents(filtered);
+    } else {
+      // When all filters are cleared, use the events directly from the API
+      setFilteredEvents(events);
+    }
+  }, [searchQuery, activeCategory, timeFilter, showFeaturedOnly, events]);  // Reset all filters and fetch first page
   const clearFilters = () => {
     setActiveCategory('all');
     setTimeFilter('all');
     setShowFeaturedOnly(false);
     setSearchQuery('');
+    fetchEvents(1); // Reset to first page when filters are cleared
+  };
+  
+  // Navigate to previous page
+  const goToPrevPage = () => {
+    if (currentPage > 1) {
+      fetchEvents(currentPage - 1);
+    }
+  };
+  
+  // Navigate to next page
+  const goToNextPage = () => {
+    if (hasMore) {
+      fetchEvents(currentPage + 1);
+    }
   };
 
   // Get featured events
-  const featuredEvents = events.filter(event => event.featured);
+  const featuredEvents = events.filter(event => event.featured);  // Reset to page 1 when filters change - using a ref to avoid dependency loops
+  const isInitialMount = React.useRef(true);
+  
+  useEffect(() => {
+    // Skip on initial render
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    
+    if (searchQuery || activeCategory !== 'all' || timeFilter !== 'all' || showFeaturedOnly) {
+      // Reset to page 1 when filters change
+      fetchEvents(1);
+    }
+  }, [searchQuery, activeCategory, timeFilter, showFeaturedOnly, fetchEvents]);
 
   // Get upcoming events
   const upcomingEvents = events.filter(event => {
@@ -359,8 +421,42 @@ const EventsPage = () => {
                       key={event.id} 
                       event={event} 
                     />
-                  ))}
-                </div>
+                  ))}                </div>
+              )}
+              
+              {/* Pagination Controls */}
+              {filteredEvents.length > 0 && (
+                <>
+                  <div className="flex justify-center items-center mt-10 space-x-4">
+                    <button 
+                      onClick={goToPrevPage} 
+                      disabled={currentPage <= 1}
+                      className={`p-2 rounded-full ${currentPage <= 1 ? 'text-gray-500 cursor-not-allowed' : 'text-white hover:bg-white/10'}`}
+                    >
+                      <FiChevronLeft />
+                    </button>
+                    <div className="text-white">Page {currentPage}</div>
+                    <button 
+                      onClick={goToNextPage} 
+                      disabled={!hasMore}
+                      className={`p-2 rounded-full ${!hasMore ? 'text-gray-500 cursor-not-allowed' : 'text-white hover:bg-white/10'}`}
+                    >
+                      <FiChevronRight />
+                    </button>
+                  </div>
+                  {!hasMore && (
+                    <motion.div 
+                      className="text-center mt-4 text-gray-400"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5 }}
+                    >
+                      <p className="inline-block bg-white/5 backdrop-blur-sm px-4 py-2 rounded-lg">
+                        You've reached the last page of events
+                      </p>
+                    </motion.div>
+                  )}
+                </>
               )}
             </motion.div>
           </>
