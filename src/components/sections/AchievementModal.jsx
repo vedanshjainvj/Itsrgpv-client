@@ -91,7 +91,7 @@ const AchievementModal = ({ achievement, isOpen, onClose }) => {
                       </span>
                       <span className="text-gray-300 flex items-center">
                         <FiBook className="mr-1" size={14} />
-                        {achievement.date}
+                        {achievement.semester} Sem
                       </span>
                     </div>
                   </div>
