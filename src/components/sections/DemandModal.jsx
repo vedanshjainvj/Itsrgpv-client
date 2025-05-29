@@ -74,7 +74,7 @@ const DemandModal = ({ demand, isOpen, onClose }) => {
                   <span className="text-gray-400 text-sm mb-1">Supporters</span>
                   <div className="flex items-center text-white text-xl font-bold">
                     <FiUsers className="mr-2 text-purple-400" />
-                    {demand.supporters}
+                    438
                   </div>
                 </div>
                 
