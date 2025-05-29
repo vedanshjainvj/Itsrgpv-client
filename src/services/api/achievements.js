@@ -35,32 +35,55 @@ const mapAchievement = (item) => {
 };
 
 const achievementsApi = {
-  getAchievements: async () => {
+  getAchievements: async (page=1 , limit=3) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/achievement/get-achievements`);
-      
-      if (response.data && response.data.data) {
+      const response = await axios.get(`${API_BASE_URL}/achievement/get-achievements`,{
+        params: { page, limit }
+      });
+      console.log('API Response:', JSON.stringify(response.data, null, 2));
+        if (response.data && response.data.data) {
         const mappedAchievements = response.data.data.map(mapAchievement);
+          // Calculate pagination values since they're not provided by the backend
+        
+        // If no items returned and we're beyond page 1, we've gone too far
+        if (mappedAchievements.length === 0 && page > 1) {
+          return {
+            achievements: [],
+            pagination: {
+              totalCount: (page - 1) * limit,
+              currentPage: page,
+              totalPages: page - 1,
+              hasMore: false
+            }
+          };
+        }
+        
+        // Normal case - check if this is likely the last page
+        const isLastPage = mappedAchievements.length < limit;
+        const totalItems = isLastPage 
+          ? (page - 1) * limit + mappedAchievements.length 
+          : mappedAchievements.length * (page + 1); // Better estimate
+        
         return {
           achievements: mappedAchievements,
           pagination: {
-            totalCount: response.data.data.totalCount || 0,
-            currentPage: response.data.data.currentPage || 1,
-            totalPages: response.data.data.totalPages || 1,
-            hasMore: response.data.data.hasMore || false
+            totalCount: totalItems,
+            currentPage: page,
+            totalPages: Math.ceil(totalItems / limit) || 1,
+            hasMore: !isLastPage && mappedAchievements.length > 0
           }
         };
       } else {
         throw new Error('Invalid API response format');
       }
     } catch (error) {
+      console.error('Error fetching achievements:', error);
       throw error;
     }
   },
-  
-  getAchievementById: async (id) => {
+    getAchievementById: async (id) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/achivement/get-achievement/${id}`);
+      const response = await axios.get(`${API_BASE_URL}/achievement/get-achievement/${id}`);
       
       if (response.data && response.data.data) {
         return mapAchievement(response.data.data);
@@ -68,6 +91,7 @@ const achievementsApi = {
         throw new Error('Invalid API response format');
       }
     } catch (error) {
+      console.error('Error fetching achievement by ID:', error);
       throw error;
     }
   }

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { FiSearch, FiX, FiAward, FiArrowRight } from 'react-icons/fi';
+import { FiSearch, FiX, FiAward, FiArrowRight, FiArrowLeft, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { STUDENT_ACHIEVEMENTS } from '../utils/constants';
 import AchievementCard from '../components/sections/AchievementCard';
 import AchievementModal from '../components/sections/AchievementModal';
@@ -19,6 +19,9 @@ const AchievementsPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   
   const { scrollYProgress } = useScroll();
   const headerOpacity = useTransform(scrollYProgress, [0, 0.1], [1, 0]);
@@ -27,30 +30,70 @@ const AchievementsPage = () => {
   const filterCount = 
     (activeCategory !== 'all' ? 1 : 0) + 
     (activeBranch !== 'all' ? 1 : 0) + 
-    (activeYear !== 'all' ? 1 : 0);
-
-  // Fetch achievements from API
-  useEffect(() => {
-    const fetchAchievements = async () => {
-      try {
-        setLoading(true);
-        console.log('Fetching achievements from API...');
-        const result = await achievementsApi.getAchievements();
+    (activeYear !== 'all' ? 1 : 0);  // Fetch achievements from API with pagination
+  const fetchAchievements = async (page = 1) => {
+    try {
+      setLoading(true);
+      const limit = 2; // Define items per page
+      console.log(`Fetching achievements from API for page ${page}...`);
+      const result = await achievementsApi.getAchievements(page, limit); // Getting 3 achievements per page
+      
+      if (result && result.achievements) {
+        // Handle case where we've gone past available data
+        if (result.achievements.length === 0 && page > 1) {
+          console.log('No achievements found for this page, likely past the end');
+          setHasMore(false);
+          // Go back to the last valid page if we went too far
+          fetchAchievements(page - 1);
+          return;
+        }
+        
         setAchievements(result.achievements);
         setFilteredAchievements(result.achievements);
+          // Update pagination state
+        setCurrentPage(result.pagination.currentPage);
+        setTotalPages(result.pagination.totalPages || 1);
+        setHasMore(result.pagination.hasMore || false);
+        
+        // Log pagination state for debugging
+        console.log(`Page ${result.pagination.currentPage}: Got ${result.achievements.length} items of ${limit} requested`);
+        console.log(`Total pages: ${result.pagination.totalPages}, Has more: ${result.pagination.hasMore}`);
+        
         setError(null);
-      } catch (err) {
-        console.error('Error fetching achievements:', err);
-        setError('Failed to load achievements. Using sample data instead.');
-        setAchievements(STUDENT_ACHIEVEMENTS);
-        setFilteredAchievements(STUDENT_ACHIEVEMENTS);
-      } finally {
-        setLoading(false);
       }
-    };
-
-    fetchAchievements();
+    } catch (err) {
+      console.error('Error fetching achievements:', err);
+      setError('Failed to load achievements. Using sample data instead.');
+      setAchievements(STUDENT_ACHIEVEMENTS);
+      setFilteredAchievements(STUDENT_ACHIEVEMENTS);
+      
+      // Reset pagination state on error
+      setCurrentPage(1);
+      setTotalPages(1);
+      setHasMore(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+    // Initial data fetch
+  useEffect(() => {
+    fetchAchievements(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  
+  // Navigate to previous page
+  const goToPrevPage = () => {
+    if (currentPage > 1) {
+      fetchAchievements(currentPage - 1);
+    }
+  };
+  
+  // Navigate to next page
+  const goToNextPage = () => {
+    if (hasMore) {
+      fetchAchievements(currentPage + 1);
+    }
+  };
 
   // Filter achievements based on search query and active filters
   useEffect(() => {
@@ -313,16 +356,62 @@ const AchievementsPage = () => {
                   Clear all filters
                 </button>
               </div>
-            </motion.div>
-          ) : (            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredAchievements.map((achievement) => (
-                <AchievementCard 
-                  key={achievement.id} 
-                  achievement={achievement} 
-                  onViewDetails={handleViewDetails}
-                />
-              ))}
-            </div>
+            </motion.div>          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredAchievements.map((achievement) => (
+                  <AchievementCard 
+                    key={achievement.id} 
+                    achievement={achievement} 
+                    onViewDetails={handleViewDetails}
+                  />
+                ))}
+              </div>
+              
+              {/* Pagination Controls */}
+              <div className="flex justify-center items-center mt-10 space-x-4">
+                <button 
+                  onClick={goToPrevPage}
+                  disabled={currentPage <= 1}
+                  className={`flex items-center justify-center w-10 h-10 rounded-full ${
+                    currentPage <= 1 
+                      ? 'bg-gray-700/30 cursor-not-allowed' 
+                      : 'bg-purple-500/20 hover:bg-purple-500/30'
+                  } transition-colors`}
+                >
+                  <FiChevronLeft className={`${currentPage <= 1 ? 'text-gray-600' : 'text-white'}`} />
+                </button>
+                
+                <div className="text-white bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg">
+                  Page {currentPage}
+                </div>
+                
+                <button 
+                  onClick={goToNextPage}
+                  disabled={!hasMore}
+                  className={`flex items-center justify-center w-10 h-10 rounded-full ${
+                    !hasMore 
+                      ? 'bg-gray-700/30 cursor-not-allowed' 
+                      : 'bg-purple-500/20 hover:bg-purple-500/30'
+                  } transition-colors`}
+                >
+                  <FiChevronRight className={`${!hasMore ? 'text-gray-600' : 'text-white'}`} />
+                </button>
+              </div>
+                {/* Last Page Message */}
+              {!hasMore && (
+                <motion.div 
+                  className="text-center mt-4 text-gray-400"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <p className="inline-block bg-white/5 backdrop-blur-sm px-4 py-2 rounded-lg">
+                    You've reached the last page of achievements
+                  </p>
+                </motion.div>
+              )}
+            </>
           )}
         </motion.div>
         

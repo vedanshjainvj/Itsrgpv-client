@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiX, FiChevronLeft, FiChevronRight, FiGrid, FiList, FiFilter, FiSearch } from 'react-icons/fi';
 import { GALLERY_ITEMS } from '../utils/constants';
+import photogalleryApi from '../services/api/photogallery';
 
 const CATEGORIES = [
   { id: 'all', name: 'All Photos' },
@@ -18,13 +19,56 @@ const GalleryPage = () => {
   const [filteredItems, setFilteredItems] = useState(GALLERY_ITEMS);
   const [selectedImage, setSelectedImage] = useState(null);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [allItems, setAllItems] = useState([]);
+  const [hasMore, setHasMore] = useState(true);
 
+  // Fetch gallery images from the API
   useEffect(() => {
-    // Filter gallery items based on search query and category
-    const filtered = GALLERY_ITEMS.filter(item => {
+    const fetchGalleryItems = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        const response = await photogalleryApi.getPhotogalleries(currentPage, 12);
+        console.log("Fetched gallery items from the gallaryPage:", response);
+        
+        if (response && response.images) {
+          setAllItems(prevItems => 
+            currentPage === 1 ? response.images : [...prevItems, ...response.images]
+          );
+          setTotalPages(response.pagination.totalPages || 1);
+          setHasMore(currentPage < response.pagination.totalPages);
+        } else {
+          // Fallback to dummy data if API returns no images
+          setAllItems(GALLERY_ITEMS);
+          setHasMore(false);
+        }
+      } catch (err) {
+        console.error("Failed to fetch gallery items:", err);
+        setError("Failed to load gallery items.");
+        // Use dummy data as fallback
+        if (currentPage === 1) {
+          setAllItems(GALLERY_ITEMS);
+        }
+        setHasMore(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchGalleryItems();
+  }, [currentPage]);
+
+  // Filter gallery items based on search query and category
+  useEffect(() => {
+    const filtered = allItems.filter(item => {
       const searchMatch = searchQuery === '' || 
-        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchQuery.toLowerCase());
+        item.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.description?.toLowerCase().includes(searchQuery.toLowerCase());
       
       const categoryMatch = activeCategory === 'all' || item.category === activeCategory;
       
@@ -32,7 +76,7 @@ const GalleryPage = () => {
     });
     
     setFilteredItems(filtered);
-  }, [searchQuery, activeCategory]);
+  }, [searchQuery, activeCategory, allItems]);
 
   const openLightbox = (item) => {
     setSelectedImage(item);
@@ -209,16 +253,48 @@ const GalleryPage = () => {
             ))}
           </motion.div>
         )}
-        
-        {filteredItems.length > 0 && (
+          {filteredItems.length > 0 && (
           <div className="mt-12 text-center">
-            <p className="text-gray-400 mb-6">Showing {filteredItems.length} of {GALLERY_ITEMS.length} photos</p>
-            <button className="bg-white/5 backdrop-blur-sm text-white px-8 py-3 rounded-full font-medium hover:bg-white/10 transition-colors inline-flex items-center">
-              <span>Load More</span>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
+            <p className="text-gray-400 mb-6">
+              {error ? 'Showing offline gallery data' : `Showing ${filteredItems.length} photos`}
+            </p>
+            
+            {hasMore && !error && (
+              <button 
+                onClick={() => setCurrentPage(prev => prev + 1)}
+                disabled={isLoading}
+                className="bg-white/5 backdrop-blur-sm text-white px-8 py-3 rounded-full font-medium hover:bg-white/10 transition-colors inline-flex items-center"
+              >
+                {isLoading ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Loading...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Load More</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </>
+                )}
+              </button>
+            )}
+            
+            {error && (
+              <button 
+                onClick={() => window.location.reload()}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-full font-medium transition-colors inline-flex items-center"
+              >
+                <span>Retry</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+            )}
           </div>
         )}
       </div>
