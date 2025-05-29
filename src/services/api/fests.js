@@ -5,7 +5,7 @@ const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:4001/
 // Map API data to include only fields required by frontend components
 const mapFest = (item) => {
   // Common fields used in list view (FestsPage)
-  const baseFields = {
+  return {
     id: item._id || "NA",
     name: item.festName || "NA",
     tagline: item.theme || "Join us for an amazing experience",
@@ -23,14 +23,12 @@ const mapFest = (item) => {
       : "NA",
     organizedBy: item.organizer || "NA",
   };
-
-  return { ...baseFields };
 };
 
 const festsApi = {
   getFests: async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/fest/get-all-fest`);
+      const response = await axios.get(`${API_BASE_URL}/fest/get-fest`);
       console.log("API Response for fests:", response);
       if (response.data?.data) {
         const mappedFests = response.data.data.map(mapFest);
