@@ -4,8 +4,27 @@ import { FiEdit3, FiCamera, FiBookmark, FiCalendar, FiEdit, FiHeart, FiMessageSq
 import { checkUseAuth } from '../context/AuthContext';
 
 const ProfilePage = () => {
-  const { user ,userData} = checkUseAuth();
+  const { user, userData } = checkUseAuth();
+  console.log("User", user);
+  console.log("User Data:", userData);
   const [activeTab, setActiveTab] = useState('posts');
+  // Combine all user data into a single object with proper fallbacks
+  const userInfo = {
+    firstName: userData?.firstName || 'User',
+    lastName: userData?.lastName || '',
+    email: userData?.email || 'user@example.com',
+    branch: userData?.branch || 'Not specified',
+    year: userData?.year || 'Not specified',
+    bio: userData?.aboutUs || 'No bio available',
+    profilePic: userData?.profilePic || 'https://www.svgrepo.com/show/384670/account-avatar-profile-user.svg',
+    coverPic: userData?.coverPic || 'https://marketplace.canva.com/EAE1oe3H6Sc/1/0/1600w/canva-black-elegant-minimalist-profile-linkedin-banner-nc0eALdRvKU.jpg',
+    joinDate: userData?.createdAt ? new Date(userData.createdAt).toLocaleDateString() : 'Recently joined',
+    posts: userData?.posts ?? 24, // Use nullish coalescing for numeric values
+    demands: userData?.demands ?? 5,
+    comments: userData?.comments ?? 42,
+    followers: userData?.followers ?? 128,
+    following: userData?.following ?? 87
+  };
 
   // Animation variants
   const pageVariants = {
@@ -54,7 +73,6 @@ const ProfilePage = () => {
       transition: { duration: 0.3 }
     }
   };
-
   // Tabs for profile content
   const tabs = [
     { id: 'posts', label: 'Posts' },
@@ -62,42 +80,6 @@ const ProfilePage = () => {
     { id: 'demands', label: 'Demands' },
     { id: 'saved', label: 'Saved' }
   ];
-
-  // Mock data for user profile
-  // const mockUser = {
-  //   ...user,
-  //   firstName: userData?.firstName || 'John',
-  //   lastName: userData?.lastName || 'Doe',
-  //   email: userData?.email || 'john.doe@example.com',
-  //   branch: 'Computer Science',
-  //   year: '3rd Year',
-  //   bio: 'Passionate student interested in web development, machine learning, and creating innovative solutions.',
-  //   profilePic: user?.profilePic || '/assets/default-avatar.png',
-  //   coverPic: '/assets/profile-cover.jpg',
-  //   joinDate: 'June 2022',
-  //   posts: 24,
-  //   demands: 5,
-  //   comments: 42,
-  //   followers: 128,
-  //   following: 87
-  // };
-
-  const mockUser = {
-  firstName: userData?.firstName || 'John',
-  lastName: userData?.lastName || 'Doe',
-  email: userData?.email || 'john.doe@example.com',
-  branch: userData?.branch || 'Computer Science',
-  year: userData?.year || '3rd Year',
-  bio: userData?.aboutUs || 'Passionate student interested in web development, machine learning, and creating innovative solutions.',
-  profilePic: userData?.profilePic || '/assets/default-avatar.png',
-  coverPic: userData?.coverPic || '/assets/profile-cover.jpg',
-  joinDate: userData?.createdAt || 'June 2022',
-  posts: userData?.posts ?? 24,
-  demands: userData?.demands ?? 5,
-  comments: userData?.comments ?? 42,
-  followers: userData?.followers ?? 128,
-  following: userData?.following ?? 87
-};
 
 
   // Mock posts data
@@ -198,16 +180,15 @@ const ProfilePage = () => {
         whileHover="hover"
         className="relative bg-gray-800/40 backdrop-blur-sm border border-gray-700/50 rounded-xl overflow-hidden"
       >
-        <div className="p-4">
-          <div className="flex items-start justify-between">
+        <div className="p-4">          <div className="flex items-start justify-between">
             <div className="flex items-center space-x-3">
               <img 
-                src="https://www.svgrepo.com/show/384670/account-avatar-profile-user.svg"
-                alt={mockUser.firstName} 
+                src={userInfo.profilePic}
+                alt={userInfo.firstName} 
                 className="w-10 h-10 rounded-full object-cover border border-gray-700"
               />
               <div>
-                <h3 className="font-medium text-white">{mockUser.firstName} {mockUser.lastName}</h3>
+                <h3 className="font-medium text-white">{userInfo.firstName} {userInfo.lastName}</h3>
                 <p className="text-xs text-gray-400 flex items-center">
                   <FiCalendar size={12} className="mr-1" />
                   {post.date}
@@ -255,11 +236,10 @@ const ProfilePage = () => {
       exit="exit"
     >
       {/* Profile Header */}
-      <div className="relative">
-        {/* Cover Image */}
+      <div className="relative">        {/* Cover Image */}
         <div className="w-full h-56 md:h-64 lg:h-80 overflow-hidden">
           <img 
-            src="https://marketplace.canva.com/EAE1oe3H6Sc/1/0/1600w/canva-black-elegant-minimalist-profile-linkedin-banner-nc0eALdRvKU.jpg"
+            src={userInfo.coverPic}
             alt="Cover" 
             className="w-full h-full object-cover"
           />
@@ -276,11 +256,10 @@ const ProfilePage = () => {
             className="flex flex-col md:flex-row items-start md:items-end gap-4"
           >
             {/* Profile Picture */}
-            <div className="relative">
-              <div className="w-32 h-32 rounded-full border-4 border-black bg-black overflow-hidden">
+            <div className="relative">              <div className="w-32 h-32 rounded-full border-4 border-black bg-black overflow-hidden">
                 <img 
-                  src="https://www.svgrepo.com/show/384670/account-avatar-profile-user.svg"
-                  alt={mockUser.firstName} 
+                  src={userInfo.profilePic}
+                  alt={userInfo.firstName} 
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -292,7 +271,7 @@ const ProfilePage = () => {
             {/* User Info */}
             <div className="flex-1 space-y-2">
               <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-white">{mockUser.firstName} {mockUser.lastName}</h1>
+                <h1 className="text-2xl font-bold text-white">{userInfo.firstName} {userInfo.lastName}</h1>
                 <motion.button 
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -303,35 +282,35 @@ const ProfilePage = () => {
                 </motion.button>
               </div>
               
-              <p className="text-gray-300 max-w-2xl">{mockUser.bio}</p>
+              <p className="text-gray-300 max-w-2xl">{userInfo.bio}</p>
               
               <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm pt-1">
-                <span className="text-gray-400"><strong className="text-white">{mockUser.branch}</strong> • {mockUser.year}</span>
-                <span className="text-gray-400 flex items-center"><FiCalendar className="mr-1" /> Joined {mockUser.joinDate}</span>
+                <span className="text-gray-400"><strong className="text-white">{userInfo.branch}</strong> • {userInfo.year}</span>
+                <span className="text-gray-400 flex items-center"><FiCalendar className="mr-1" /> Joined {userInfo.joinDate}</span>
               </div>
               
-              <div className="flex flex-wrap items-center gap-4 pt-2">
+              {/* <div className="flex flex-wrap items-center gap-4 pt-2">
                 <div className="text-center">
-                  <span className="block text-white font-semibold">{mockUser.posts}</span>
+                  <span className="block text-white font-semibold">{userInfo.posts}</span>
                   <span className="text-xs text-gray-400">Posts</span>
                 </div>
                 <div className="text-center">
-                  <span className="block text-white font-semibold">{mockUser.demands}</span>
+                  <span className="block text-white font-semibold">{userInfo.demands}</span>
                   <span className="text-xs text-gray-400">Demands</span>
                 </div>
                 <div className="text-center">
-                  <span className="block text-white font-semibold">{mockUser.comments}</span>
+                  <span className="block text-white font-semibold">{userInfo.comments}</span>
                   <span className="text-xs text-gray-400">Comments</span>
                 </div>
                 <div className="text-center">
-                  <span className="block text-white font-semibold">{mockUser.followers}</span>
+                  <span className="block text-white font-semibold">{userInfo.followers}</span>
                   <span className="text-xs text-gray-400">Followers</span>
                 </div>
                 <div className="text-center">
-                  <span className="block text-white font-semibold">{mockUser.following}</span>
+                  <span className="block text-white font-semibold">{userInfo.following}</span>
                   <span className="text-xs text-gray-400">Following</span>
                 </div>
-              </div>
+              </div> */}
             </div>
           </motion.div>
         </div>
