@@ -54,20 +54,42 @@ const determineDemandCategory = (topic) => {
 };
 
 const demandsApi = {
-  getDemands: async () => {
+  getDemands: async (page = 1, limit = 3) => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/demand/get-demand`);
+      const response = await axios.get(`${API_BASE_URL}/demand/get-demand`, {
+        params: { page, limit }
+      });
       console.log('API Response:', JSON.stringify(response.data, null, 2));
       
       if (response.data && response.data.data) {
         const mappedDemands = response.data.data.map(mapDemand);
+        
+        // If no items returned and we're beyond page 1, we've gone too far
+        if (mappedDemands.length === 0 && page > 1) {
+          return {
+            demands: [],
+            pagination: {
+              totalCount: (page - 1) * limit,
+              currentPage: page,
+              totalPages: page - 1,
+              hasMore: false
+            }
+          };
+        }
+        
+        // Normal case - check if this is likely the last page
+        const isLastPage = mappedDemands.length < limit;
+        const totalItems = isLastPage 
+          ? (page - 1) * limit + mappedDemands.length 
+          : mappedDemands.length * (page + 1); // Better estimate
+        
         return {
           demands: mappedDemands,
           pagination: {
-            totalCount: mappedDemands.length || 0,
-            currentPage: 1,
-            totalPages: 1,
-            hasMore: false
+            totalCount: totalItems,
+            currentPage: page,
+            totalPages: Math.ceil(totalItems / limit) || 1,
+            hasMore: !isLastPage && mappedDemands.length > 0
           }
         };
       } else {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { FiSearch, FiX, FiPlus } from 'react-icons/fi';
+import { FiSearch, FiX, FiPlus, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { STUDENT_DEMANDS } from '../utils/constants';
 import DemandCard from '../components/sections/DemandCard';
 import DemandModal from '../components/sections/DemandModal';
@@ -18,32 +18,80 @@ const DemandsPage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   
   const { scrollYProgress } = useScroll();
   const headerOpacity = useTransform(scrollYProgress, [0, 0.1], [1, 0]);
   const headerTranslateY = useTransform(scrollYProgress, [0, 0.1], [0, -100]);
-  // Fetch demands from API
-  useEffect(() => {
-    const fetchDemands = async () => {
-      try {
-        setLoading(true);
-        console.log('Fetching demands from API...');
-        const result = await demandsApi.getDemands();
+  
+  // Fetch demands from API with pagination
+  const fetchDemands = async (page = 1) => {
+    try {
+      setLoading(true);
+      const limit = 3; // Define items per page
+      console.log(`Fetching demands from API for page ${page}...`);
+      const result = await demandsApi.getDemands(page, limit);
+      
+      if (result && result.demands) {
+        // Handle case where we've gone past available data
+        if (result.demands.length === 0 && page > 1) {
+          console.log('No demands found for this page, likely past the end');
+          setHasMore(false);
+          // Go back to the last valid page if we went too far
+          fetchDemands(page - 1);
+          return;
+        }
+        
         setDemands(result.demands);
         setFilteredDemands(result.demands);
+        
+        // Update pagination state
+        setCurrentPage(result.pagination.currentPage);
+        setTotalPages(result.pagination.totalPages || 1);
+        setHasMore(result.pagination.hasMore || false);
+        
+        // Log pagination state for debugging
+        console.log(`Page ${result.pagination.currentPage}: Got ${result.demands.length} items of ${limit} requested`);
+        console.log(`Total pages: ${result.pagination.totalPages}, Has more: ${result.pagination.hasMore}`);
+        
         setError(null);
-      } catch (err) {
-        console.error('Error fetching demands:', err);
-        setError('Failed to load demands. Using sample data instead.');
-        setDemands(STUDENT_DEMANDS);
-        setFilteredDemands(STUDENT_DEMANDS);
-      } finally {
-        setLoading(false);
       }
-    };
-
-    fetchDemands();
+    } catch (err) {
+      console.error('Error fetching demands:', err);
+      setError('Failed to load demands. Using sample data instead.');
+      setDemands(STUDENT_DEMANDS);
+      setFilteredDemands(STUDENT_DEMANDS);
+      
+      // Reset pagination state on error
+      setCurrentPage(1);
+      setTotalPages(1);
+      setHasMore(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Initial data fetch
+  useEffect(() => {
+    fetchDemands(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  
+  // Navigate to previous page
+  const goToPrevPage = () => {
+    if (currentPage > 1) {
+      fetchDemands(currentPage - 1);
+    }
+  };
+  
+  // Navigate to next page
+  const goToNextPage = () => {
+    if (hasMore) {
+      fetchDemands(currentPage + 1);
+    }
+  };
 
   // Filter demands based on search query and active filters
   useEffect(() => {
@@ -239,13 +287,52 @@ const DemandsPage = () => {
             ))}
           </div>
         )}
-        
-        {/* Load More Button */}
+          {/* Pagination Controls */}
         {filteredDemands.length > 0 && (
-          <div className="flex justify-center mb-12">
-            <button className="bg-white/5 backdrop-blur-sm text-white px-8 py-3 rounded-full font-medium hover:bg-white/10 transition-colors">
-              Load More
-            </button>
+          <div className="mb-12">
+            <div className="flex justify-center items-center mt-10 space-x-4">
+              <button 
+                onClick={goToPrevPage}
+                disabled={currentPage <= 1}
+                className={`flex items-center justify-center w-10 h-10 rounded-full ${
+                  currentPage <= 1 
+                    ? 'bg-gray-700/30 cursor-not-allowed' 
+                    : 'bg-purple-500/20 hover:bg-purple-500/30'
+                } transition-colors`}
+              >
+                <FiChevronLeft className={`${currentPage <= 1 ? 'text-gray-600' : 'text-white'}`} />
+              </button>
+              
+              <div className="text-white bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg">
+                Page {currentPage}
+              </div>
+              
+              <button 
+                onClick={goToNextPage}
+                disabled={!hasMore}
+                className={`flex items-center justify-center w-10 h-10 rounded-full ${
+                  !hasMore 
+                    ? 'bg-gray-700/30 cursor-not-allowed' 
+                    : 'bg-purple-500/20 hover:bg-purple-500/30'
+                } transition-colors`}
+              >
+                <FiChevronRight className={`${!hasMore ? 'text-gray-600' : 'text-white'}`} />
+              </button>
+            </div>
+            
+            {/* Last Page Message */}
+            {!hasMore && (
+              <motion.div 
+                className="text-center mt-4 text-gray-400"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <p className="inline-block bg-white/5 backdrop-blur-sm px-4 py-2 rounded-lg">
+                  You've reached the last page of demands
+                </p>
+              </motion.div>
+            )}
           </div>
         )}
       </div>
